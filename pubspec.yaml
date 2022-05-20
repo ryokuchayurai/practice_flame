@@ -27,6 +27,12 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flame:
+    path: package/flame/packages/flame
+  flame_tiled:
+    path: package/flame/packages/flame_tiled
+  flame_audio:
+    path: package/flame/packages/flame_audio
   flutter:
     sdk: flutter
 
@@ -34,6 +40,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
+
 
 dev_dependencies:
   flutter_test:
@@ -87,3 +94,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  assets:
+    - assets/tiles/map.tmx
+    - assets/images/map-level1.png
+    - assets/images/map-level2.png
+    - assets/images/coins.png
+    - assets/audio/music/bg_music.ogg
+    - assets/audio/sfx/fire_1.mp3
+    - assets/audio/sfx/fire_2.mp3
