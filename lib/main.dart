@@ -9,15 +9,78 @@ import 'package:flame/sprite.dart';
 import 'package:flame_audio/audio_pool.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_tiled/flame_tiled.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Animation, Image;
-import 'package:practice_flame/custom_fixed_resolution_viewport.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:tiled/tiled.dart';
+import 'package:flutter/material.dart';
 
 void main() {
-  runApp(GameWidget(game: TiledGame()));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MaterialApp(
+    theme: ThemeData(
+      primarySwatch: Colors.brown,
+      scaffoldBackgroundColor: Color.fromARGB(0xFF, 0xFE, 0xFE, 0xF9),
+      textTheme: GoogleFonts.sawarabiMinchoTextTheme()),
+      home: MyAppHome()));
 }
 
-class TiledGame extends FlameGame with TapDetector, HasDraggables {
+class MyAppHome extends StatelessWidget{
+  @override
+  Widget build(BuildContext context) {
+    return GameWidget(
+      game: TiledGame(),
+    );
+  }
+
+}
+
+enum Screen {
+  Test1,
+  Test2,
+}
+
+class MyGame extends FlameGame with TapDetector, HasDraggables, KeyboardEvents{
+
+  List<FlameGame> _stack = [];
+
+  @override
+  Future<void> onLoad() async {
+    await push(Screen.Test1);
+  }
+
+  Future<void> push(Screen screen) async {
+    switch(screen) {
+      case Screen.Test1:
+        _stack.add(TiledGame());
+        break;
+      case Screen.Test2:
+        _stack.add(TestGame());
+        break;
+    }
+    await add(_stack.last);
+  }
+
+  Future<void> pop()  async{
+    remove(_stack.last);
+    _stack.removeLast();
+  }
+
+  Future<void> popAndPush(Screen screen)  async{
+    pop();
+    push(screen);
+  }
+
+  @override
+  void onTapDown(TapDownInfo details) async {
+    super.onTapDown(details);
+    if (_stack.last is TiledGame) {
+      (_stack.last as TiledGame).onTapDown(details);
+    }
+  }
+}
+
+class TiledGame extends FlameGame with TapDetector, HasDraggables, KeyboardEvents {
   late Image coins;
   late final JoystickComponent joystick;
 
@@ -35,7 +98,7 @@ class TiledGame extends FlameGame with TapDetector, HasDraggables {
     add(tiledMap);
 
     final objGroup = tiledMap.tileMap.getLayer<ObjectGroup>('AnimatedCoins');
-    coins = await Flame.images.load('coins.png');
+    var coins = await Flame.images.load('coins.png');
 
     // We are 100% sure that an object layer named `AnimatedCoins`
     // exists in the example `map.tmx`.
@@ -113,8 +176,10 @@ class TiledGame extends FlameGame with TapDetector, HasDraggables {
     // }
     add(TextComponent(
         text: 'Hello, Flame',
-        textRenderer: TextPaint(
-            style: TextStyle(fontSize: 18, color: BasicPalette.white.color)))
+        textRenderer: TextPaint(style: TextStyle(
+            fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+            color: Colors.white
+        )))
       ..x = details.eventPosition.game.x
       ..y = details.eventPosition.game.y);
 
@@ -140,5 +205,34 @@ class TiledGame extends FlameGame with TapDetector, HasDraggables {
         size: Vector2.all(20));
 
     add(spriteComponent);
+  }
+
+  @override
+  KeyEventResult onKeyEvent(
+      RawKeyEvent event,
+      Set<LogicalKeyboardKey> keysPressed,
+      ) {
+    final isKeyDown = event is RawKeyDownEvent;
+
+    if (event.logicalKey == LogicalKeyboardKey.keyX) {
+      Navigator.of(buildContext!).pop();
+      Navigator.of(buildContext!).push(MaterialPageRoute(
+        builder: (context) {
+          return GameWidget(game: TestGame());
+        }
+      ));
+    }
+
+    return super.onKeyEvent(event, keysPressed);
+  }
+}
+
+class TestGame extends FlameGame {
+  @override
+  Future<void> onLoad() async {
+    add(TextComponent(text: 'ああああああ', textRenderer: TextPaint(style: TextStyle(
+      fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+          color: Colors.white
+    ))));
   }
 }
