@@ -95,21 +95,21 @@ packages:
   flame:
     dependency: "direct main"
     description:
-      path: "package/flame/packages/flame"
+      path: "packages/flame/packages/flame"
       relative: true
     source: path
     version: "1.1.1"
   flame_audio:
     dependency: "direct main"
     description:
-      path: "package/flame/packages/flame_audio"
+      path: "packages/flame/packages/flame_audio"
       relative: true
     source: path
     version: "1.0.2"
   flame_tiled:
     dependency: "direct main"
     description:
-      path: "package/flame/packages/flame_tiled"
+      path: "packages/flame/packages/flame_tiled"
       relative: true
     source: path
     version: "1.4.0"
