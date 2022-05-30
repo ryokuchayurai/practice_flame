@@ -213,20 +213,21 @@ class TiledGame extends FlameGame
     RawKeyEvent event,
     Set<LogicalKeyboardKey> keysPressed,
   ) {
-    final isKeyDown = event is RawKeyDownEvent;
-
-    if (event.logicalKey == LogicalKeyboardKey.keyX) {
-      Navigator.of(buildContext!).pop();
-      Navigator.of(buildContext!).push(MaterialPageRoute(builder: (context) {
-        return GameWidget(game: TestGame());
-      }));
+    final isKeyUp = event is RawKeyUpEvent;
+    if (isKeyUp) {
+      if (event.logicalKey == LogicalKeyboardKey.keyX) {
+        Navigator.of(buildContext!).pop();
+        Navigator.of(buildContext!).push(MaterialPageRoute(builder: (context) {
+          return GameWidget(game: TestGame());
+        }));
+      }
     }
 
     return super.onKeyEvent(event, keysPressed);
   }
 }
 
-class TestGame extends FlameGame with TapDetector {
+class TestGame extends FlameGame with TapDetector, KeyboardEvents {
   final random = Random();
   final Tween<double> noise = Tween(begin: -10, end: 10);
   final ColorTween colorTween =
@@ -364,4 +365,88 @@ class TestGame extends FlameGame with TapDetector {
     final sprites = List<Sprite>.generate(frames, spritesheet.getSpriteById);
     return SpriteAnimation.spriteList(sprites, stepTime: 0.2);
   }
+
+  @override
+  KeyEventResult onKeyEvent(
+      RawKeyEvent event,
+      Set<LogicalKeyboardKey> keysPressed,
+      ) {
+    final isKeyUp = event is RawKeyUpEvent;
+    if (isKeyUp) {
+      if (event.logicalKey == LogicalKeyboardKey.keyZ) {
+        Navigator.of(buildContext!).pop();
+        Navigator.of(buildContext!).push(MaterialPageRoute(builder: (context) {
+          return GameWidget(game: TiledGame());
+        }));
+      } else if (event.logicalKey == LogicalKeyboardKey.keyX) {
+        Navigator.of(buildContext!).pop();
+        Navigator.of(buildContext!).push(MaterialPageRoute(builder: (context) {
+          return GameWidget(game: Test2Game());
+        }));
+      }
+    }
+
+    return super.onKeyEvent(event, keysPressed);
+  }
+}
+
+class Test2Game extends FlameGame with HasDraggables,KeyboardEvents {
+
+  late JoystickComponent joystick;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+
+    final knobPaint = BasicPalette.blue.withAlpha(200).paint();
+    final backgroundPaint = BasicPalette.blue.withAlpha(100).paint();
+    joystick = JoystickComponent(
+      knob: CircleComponent(radius: 30, paint: knobPaint),
+      background: CircleComponent(radius: 100, paint: backgroundPaint),
+      margin: const EdgeInsets.only(left: 40, bottom: 40),
+    );
+    add(joystick);
+
+    final image = await images.load('sprite-sheet-humn.png');
+    final jsonData = await assets.readJson('images/sprite-sheet-humn.json');
+    final animation = SpriteAnimation.fromAsepriteData(image, jsonData);
+    final spriteSize = Vector2(80,480);
+    final animationComponent = SpriteAnimationComponent(
+      animation: animation,
+      position: (size - spriteSize) / 2,
+      size: spriteSize,
+    );
+
+
+    add(animationComponent);
+  }
+
+  @override
+  KeyEventResult onKeyEvent(
+      RawKeyEvent event,
+      Set<LogicalKeyboardKey> keysPressed,
+      ) {
+    final isKeyUp = event is RawKeyUpEvent;
+    if (isKeyUp) {
+      if (event.logicalKey == LogicalKeyboardKey.keyZ) {
+        Navigator.of(buildContext!).pop();
+        Navigator.of(buildContext!).push(MaterialPageRoute(builder: (context) {
+          return GameWidget(game: TestGame());
+        }));
+      }
+    }
+
+    return super.onKeyEvent(event, keysPressed);
+  }
+}
+
+class Player extends Component with HasGameRef{
+
+  @override
+  Future<void> onLoad() async {
+    var spriteAnimation = await gameRef.loadSpriteAnimation(
+      'sprite-sheet-humn.png'
+    , SpriteAnimationData.variable(amount: 3, stepTimes: [0.15,0.15,0.15], textureSize: Vector2(16,32), amountPerRow: 3));
+  }
+
 }

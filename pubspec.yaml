@@ -27,6 +27,8 @@ flutter:
     - assets/tiles/map.tmx
     - assets/images/map-level1.png
     - assets/images/map-level2.png
+    - assets/images/sprite-sheet-humn.png
+    - assets/images/sprite-sheet-humn.json
     - assets/images/coins.png
     - assets/audio/music/bg_music.ogg
     - assets/audio/sfx/fire_1.mp3
