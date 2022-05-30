@@ -416,9 +416,12 @@ class Test2Game extends FlameGame with HasDraggables,KeyboardEvents {
       position: (size - spriteSize) / 2,
       size: spriteSize,
     );
+    
+    final sheet = SpriteSheet(image: image, srcSize: Vector2(16,32));
 
+    // add(animationComponent);
 
-    add(animationComponent);
+    add(Player(joystick));
   }
 
   @override
@@ -440,13 +443,74 @@ class Test2Game extends FlameGame with HasDraggables,KeyboardEvents {
   }
 }
 
-class Player extends Component with HasGameRef{
+class Player extends PositionComponent with HasGameRef{
+
+  late final Sprite front;
+  late final Sprite back;
+  late final Sprite side;
+
+  late final SpriteAnimation frontMove;
+  late final SpriteAnimation backMove;
+  late final SpriteAnimation sideMove;
+
+  final JoystickComponent joystick;
+
+  late final SpriteComponent stop;
+  late final SpriteAnimationComponent move;
+
+  Player(this.joystick);
 
   @override
   Future<void> onLoad() async {
-    var spriteAnimation = await gameRef.loadSpriteAnimation(
-      'sprite-sheet-humn.png'
-    , SpriteAnimationData.variable(amount: 3, stepTimes: [0.15,0.15,0.15], textureSize: Vector2(16,32), amountPerRow: 3));
+    final image = await gameRef.images.load('sprite-sheet-humn.png');
+    final sheet = SpriteSheet(image: image, srcSize: Vector2(16,32));
+
+    front = sheet.getSprite(0, 0);
+    back = sheet.getSprite(1, 0);
+    side = sheet.getSprite(2, 0);
+
+    frontMove = sheet.createAnimation(row: 0, stepTime: 0.2, loop: true, from: 1);
+    sideMove = sheet.createAnimation(row: 1, stepTime: 0.2, loop: true, from: 1);
+    backMove = sheet.createAnimation(row: 2, stepTime: 0.2, loop: true, from: 1);
+
+    stop = SpriteComponent(sprite: front);
+    move = SpriteAnimationComponent(animation: frontMove, position: gameRef.size / 2, size: Vector2(16,32));
+    add(move);
+
+    // add(SpriteComponent.fromImage(image, position: gameRef.size/2));
+    // add(TextComponent(position: gameRef.size/2, text: "aaaaaaaaaa"));
   }
 
+  // @mustCallSuper
+  // @override
+  // void render(Canvas canvas) {
+  //   move.render(canvas);
+  // }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (!joystick.delta.isZero()) {
+      position += (joystick.relativeDelta * 100 * dt);
+      switch(joystick.direction) {
+        case JoystickDirection.up:
+        case JoystickDirection.upLeft:
+        case JoystickDirection.upRight:
+          move.animation = backMove;
+          break;
+        case JoystickDirection.left:
+          move.animation = sideMove;
+          move.flipHorizontally();
+          break;
+        case JoystickDirection.right:
+          move.animation = sideMove;
+          break;
+        case JoystickDirection.down:
+        case JoystickDirection.downLeft:
+        case JoystickDirection.downRight:
+          move.animation = frontMove;
+          break;
+      }
+    }
+  }
 }
