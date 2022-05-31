@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:flame/extensions.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -12,10 +14,9 @@ import 'package:flame_audio/audio_pool.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart' hide Animation, Image;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tiled/tiled.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Image;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ class MyAppHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameWidget(
-      game: TiledGame(),
+      game: Test2Game(),
     );
   }
 }
@@ -236,6 +237,8 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
 
   @override
   Future<void> onLoad() async {
+
+
     coins = await Flame.images.load('coins.png');
     add(TextComponent(
         text: 'ああああああ',
@@ -368,9 +371,9 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
 
   @override
   KeyEventResult onKeyEvent(
-      RawKeyEvent event,
-      Set<LogicalKeyboardKey> keysPressed,
-      ) {
+    RawKeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
     final isKeyUp = event is RawKeyUpEvent;
     if (isKeyUp) {
       if (event.logicalKey == LogicalKeyboardKey.keyZ) {
@@ -390,13 +393,14 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
   }
 }
 
-class Test2Game extends FlameGame with HasDraggables,KeyboardEvents {
-
+class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
   late JoystickComponent joystick;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // camera.viewport = FixedResolutionViewport(Vector2(100, 200));
 
     final knobPaint = BasicPalette.blue.withAlpha(200).paint();
     final backgroundPaint = BasicPalette.blue.withAlpha(100).paint();
@@ -410,25 +414,45 @@ class Test2Game extends FlameGame with HasDraggables,KeyboardEvents {
     final image = await images.load('sprite-sheet-humn.png');
     final jsonData = await assets.readJson('images/sprite-sheet-humn.json');
     final animation = SpriteAnimation.fromAsepriteData(image, jsonData);
-    final spriteSize = Vector2(80,480);
+    final spriteSize = Vector2(80, 480);
     final animationComponent = SpriteAnimationComponent(
       animation: animation,
       position: (size - spriteSize) / 2,
       size: spriteSize,
     );
-    
-    final sheet = SpriteSheet(image: image, srcSize: Vector2(16,32));
+
+    final sheet = SpriteSheet(image: image, srcSize: Vector2(16, 32));
 
     // add(animationComponent);
 
     add(Player(joystick));
+
+    final image2 = await images.load('fuji.png');
+    final sprite = Sprite(image2);
+    add(
+      SpriteComponent(
+        sprite: sprite,
+            position: Vector2(0,100),
+          size: Vector2(160,168)
+      )
+    );
+
+    final sprite2 = await copyImage(sprite);
+    add(
+        SpriteComponent(
+            sprite: sprite2,
+          position: Vector2(161,100),
+
+            size: Vector2(160, 168)
+        )
+    );
   }
 
   @override
   KeyEventResult onKeyEvent(
-      RawKeyEvent event,
-      Set<LogicalKeyboardKey> keysPressed,
-      ) {
+    RawKeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
     final isKeyUp = event is RawKeyUpEvent;
     if (isKeyUp) {
       if (event.logicalKey == LogicalKeyboardKey.keyZ) {
@@ -443,15 +467,15 @@ class Test2Game extends FlameGame with HasDraggables,KeyboardEvents {
   }
 }
 
-class Player extends PositionComponent with HasGameRef{
-
+class Player extends PositionComponent with HasGameRef {
   late final Sprite front;
   late final Sprite back;
   late final Sprite side;
 
   late final SpriteAnimation frontMove;
   late final SpriteAnimation backMove;
-  late final SpriteAnimation sideMove;
+  late final SpriteAnimation rightMove;
+  late final SpriteAnimation leftMove;
 
   final JoystickComponent joystick;
 
@@ -463,22 +487,37 @@ class Player extends PositionComponent with HasGameRef{
   @override
   Future<void> onLoad() async {
     final image = await gameRef.images.load('sprite-sheet-humn.png');
-    final sheet = SpriteSheet(image: image, srcSize: Vector2(16,32));
+    final sheet = SpriteSheet(image: image, srcSize: Vector2(16, 32));
 
     front = sheet.getSprite(0, 0);
     back = sheet.getSprite(1, 0);
     side = sheet.getSprite(2, 0);
 
-    frontMove = sheet.createAnimation(row: 0, stepTime: 0.2, loop: true, from: 1);
-    sideMove = sheet.createAnimation(row: 1, stepTime: 0.2, loop: true, from: 1);
-    backMove = sheet.createAnimation(row: 2, stepTime: 0.2, loop: true, from: 1);
+    frontMove =
+        sheet.createAnimation(row: 0, stepTime: 0.2, loop: true, from: 1);
+    rightMove =
+        sheet.createAnimation(row: 1, stepTime: 0.2, loop: true, from: 1);
+
+    List<SpriteAnimationFrame> frames = await Future.wait(rightMove.frames
+        .map((f) async =>
+            SpriteAnimationFrame(await flipHorizontal(f.sprite), f.stepTime))
+        .toList());
+    leftMove = SpriteAnimation(frames, loop: true);
+
+    backMove =
+        sheet.createAnimation(row: 2, stepTime: 0.2, loop: true, from: 1);
 
     stop = SpriteComponent(sprite: front);
-    move = SpriteAnimationComponent(animation: frontMove, position: gameRef.size / 2, size: Vector2(16,32));
+    move = SpriteAnimationComponent(
+        animation: frontMove,
+        position: gameRef.size / 2,
+        size: Vector2(16, 32));
     add(move);
 
     // add(SpriteComponent.fromImage(image, position: gameRef.size/2));
     // add(TextComponent(position: gameRef.size/2, text: "aaaaaaaaaa"));
+
+
   }
 
   // @mustCallSuper
@@ -487,23 +526,24 @@ class Player extends PositionComponent with HasGameRef{
   //   move.render(canvas);
   // }
 
+  JoystickDirection? direction;
+
   @override
   void update(double dt) {
     super.update(dt);
     if (!joystick.delta.isZero()) {
       position += (joystick.relativeDelta * 100 * dt);
-      switch(joystick.direction) {
+      switch (joystick.direction) {
         case JoystickDirection.up:
         case JoystickDirection.upLeft:
         case JoystickDirection.upRight:
           move.animation = backMove;
           break;
         case JoystickDirection.left:
-          move.animation = sideMove;
-          move.flipHorizontally();
+          move.animation = leftMove;
           break;
         case JoystickDirection.right:
-          move.animation = sideMove;
+          move.animation = rightMove;
           break;
         case JoystickDirection.down:
         case JoystickDirection.downLeft:
@@ -513,4 +553,107 @@ class Player extends PositionComponent with HasGameRef{
       }
     }
   }
+}
+
+Future<Sprite> flipHorizontal(Sprite sprite) async {
+  final imageSize = sprite.srcSize;
+
+  final orgImage = sprite.image;
+  final orgPixels = await orgImage.pixelsInUint8();
+  final pixels = Uint8List((imageSize.x * imageSize.y * 4).toInt());
+
+  final orgStart = (orgImage.width * sprite.srcPosition.y * 4 + sprite.srcPosition.x * 4).toInt();
+
+  for(int i = 0;i<pixels.length;i+=4) {
+    int y = (i / (imageSize.x*4)).floor();
+    int oi = i + (y * (orgImage.width * 4 - imageSize.x * 4)).toInt();
+    // oi += orgStart;
+
+    debugPrint('--${orgPixels[oi]}');
+    // pixels[i] = orgPixels[oi];
+    pixels[i + 0] = orgPixels[oi + 0];
+    pixels[i + 1] = orgPixels[oi + 1];
+    pixels[i + 2] = orgPixels[oi + 2];
+    pixels[i + 3] = orgPixels[oi + 3];
+  }
+
+  // final image = await sprite.toImage();
+  //
+  //
+  // final pixels = await image.pixelsInUint8();
+  // final destPixels = Uint8List(pixels.length);
+  //
+  // debugPrint('${pixels.length} $imageSize ${sprite.src}');
+  //
+  // for (int i = 0; i<destPixels.length;i++) {
+  //   debugPrint('$i ${pixels[i]}');
+  //   destPixels[i] = pixels[i];
+  // }
+
+  // final image = await sprite.image.pixelsInUint8()toImage();
+  // final pixels = await sprite.image.pixelsInUint8();
+  // final imageSize = sprite.srcSize;
+  //
+  // debugPrint('${sprite.srcSize} ${sprite.image.size}');
+  //
+  // final srcI = sprite.srcPosition.x * sprite.srcPosition.y * 4;
+  //
+  // final destPixels = Uint8List((imageSize.x * imageSize.y * 4).toInt());
+  // for (int i = 0; i<destPixels.length;i++) {
+  //   destPixels[i] = pixels[i];
+  // }
+  //
+  //
+  // for (int y = 0; y < imageSize.y.toInt() * 4; y++) {
+  //   for (int x = 0; x < imageSize.x.toInt() * 4; x++) {
+  //     final srcX = x + sprite.srcPosition.x.toInt();
+  //     final srcY = y + sprite.srcPosition.y.toInt();
+  //
+  //     destPixels[x + y * imageSize.x.toInt()] = 255;
+  //   }
+  // }
+
+  final destImage = await ImageExtension.fromPixels(
+      pixels, imageSize.x.toInt(), imageSize.y.toInt());
+  return Sprite(destImage);
+}
+
+Future<Sprite> copyImage(Sprite sprite) async {
+  final imageSize = sprite.srcSize;
+  final orgImage = sprite.image;
+  final orgByte = await orgImage.toByteData(format: ImageByteFormat.rawRgba);
+  final orgPixels = orgByte!.buffer.asUint8List();
+  // final orgPixels = await orgImage.pixelsInUint8();
+  final pixels = Uint8List((imageSize.x * imageSize.y * 4).toInt());
+
+  final bgrazone = (orgPixels.length / 4).toInt();
+
+  debugPrint('${orgPixels.length}/ ${orgPixels.length/4}');
+  bool f = true;
+  for(int i=0;i<orgPixels.length;i+=4){
+    // debugPrint('$i ${orgPixels[i]} ${orgPixels[i+1]} ${orgPixels[i+2]} ${orgPixels[i+3]}');
+    if (f && orgPixels[i]==0) {
+      debugPrint('$i');
+      f = false;
+    }
+    // if (i<bgrazone) {
+    //   pixels[i + 0] = orgPixels[i + 0];
+    //   pixels[i + 1] = orgPixels[i + 1];
+    //   pixels[i + 2] = orgPixels[i + 2];
+    //   pixels[i + 3] = orgPixels[i + 3];
+    // } else {
+    //   pixels[i + 0] = orgPixels[i + 2];
+    //   pixels[i + 1] = orgPixels[i + 1];
+    //   pixels[i + 2] = orgPixels[i + 0];
+    //   pixels[i + 3] = orgPixels[i + 3];
+    // }
+    pixels[i + 0] = orgPixels[i + 0];
+    pixels[i + 1] = orgPixels[i + 1];
+    pixels[i + 2] = orgPixels[i + 2];
+    pixels[i + 3] = orgPixels[i + 3];
+  }
+
+  final destImage = await ImageExtension.fromPixels(
+      pixels, imageSize.x.toInt(), imageSize.y.toInt());
+  return Sprite(destImage);
 }

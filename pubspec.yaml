@@ -29,7 +29,10 @@ flutter:
     - assets/images/map-level2.png
     - assets/images/sprite-sheet-humn.png
     - assets/images/sprite-sheet-humn.json
+    - assets/images/white.png
+    - assets/images/black.png
     - assets/images/coins.png
+    - assets/images/fuji.png
     - assets/audio/music/bg_music.ogg
     - assets/audio/sfx/fire_1.mp3
     - assets/audio/sfx/fire_2.mp3
