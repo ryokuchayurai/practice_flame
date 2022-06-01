@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -20,6 +21,7 @@ import 'package:flutter/material.dart' hide Image;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(MaterialApp(
       theme: ThemeData(
           primarySwatch: Colors.brown,
@@ -32,7 +34,7 @@ class MyAppHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameWidget(
-      game: Test2Game(),
+      game: TiledGame(),
     );
   }
 }
@@ -122,7 +124,7 @@ class TiledGame extends FlameGame
     }
 
     pool = await AudioPool.create('fire_2.mp3', minPlayers: 3, maxPlayers: 4);
-    // startBgmMusic();
+    startBgmMusic();
 
     // camera.position.add(Vector2(100, 200));
     // camera.zoom = 10;
@@ -159,9 +161,9 @@ class TiledGame extends FlameGame
     FlameAudio.bgm.play('music/bg_music.ogg');
   }
 
-  void fireOne() {
-    FlameAudio.audioCache.play('sfx/fire_1.mp3');
-  }
+  // void fireOne() {
+  //   FlameAudio.audioCache.play('sfx/fire_1.mp3');
+  // }
 
   void fireTwo() {
     pool.start();
@@ -169,7 +171,7 @@ class TiledGame extends FlameGame
 
   @override
   void onTapDown(TapDownInfo details) async {
-    fireOne();
+    fireTwo();
     // startBgmMusic();
     // if (button.containsPoint(details.eventPosition.game)) {
     //   fireTwo();

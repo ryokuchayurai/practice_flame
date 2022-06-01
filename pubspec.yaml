@@ -13,6 +13,9 @@ dependencies:
     path: packages/flame/packages/flame_tiled
   flame_audio:
     path: packages/flame/packages/flame_audio
+#  flame: ^1.1.1
+#  flame_tiled: ^1.4.0
+#  flame_audio: ^1.0.2
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
