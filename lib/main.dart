@@ -16,6 +16,7 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:practice_flame/character.dart';
 import 'package:tiled/tiled.dart';
 import 'package:flutter/material.dart' hide Image;
 
@@ -397,12 +398,14 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
 
 class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
   late JoystickComponent joystick;
+  late Character _character;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
     // camera.viewport = FixedResolutionViewport(Vector2(100, 200));
+    camera.viewport = FixedResolutionViewport(Vector2(400, 300));
 
     final knobPaint = BasicPalette.blue.withAlpha(200).paint();
     final backgroundPaint = BasicPalette.blue.withAlpha(100).paint();
@@ -448,6 +451,13 @@ class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
             size: Vector2(160, 168)
         )
     );
+
+    _character = Character(sheet)..position = Vector2(300, 100);
+    add(_character);
+
+    var front = sheet.createAnimation(row: 0, stepTime: 0.2, loop: true, from: 0, to: 1);
+    add(SpriteComponent(sprite: front.frames[0].sprite));
+    debugPrint('------ ${front.frames.length}');
   }
 
   @override
@@ -456,12 +466,25 @@ class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
     Set<LogicalKeyboardKey> keysPressed,
   ) {
     final isKeyUp = event is RawKeyUpEvent;
+    final isKeyDown = event is RawKeyDownEvent;
     if (isKeyUp) {
       if (event.logicalKey == LogicalKeyboardKey.keyZ) {
         Navigator.of(buildContext!).pop();
         Navigator.of(buildContext!).push(MaterialPageRoute(builder: (context) {
           return GameWidget(game: TestGame());
         }));
+      }
+      _character.idle();
+    }
+    if (isKeyDown) {
+      if (event.logicalKey == LogicalKeyboardKey.keyW) {
+        _character.move(JoystickDirection.up);
+      } else if (event.logicalKey == LogicalKeyboardKey.keyA) {
+        _character.move(JoystickDirection.left);
+      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
+        _character.move(JoystickDirection.down);
+      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
+        _character.move(JoystickDirection.right);
       }
     }
 
@@ -515,6 +538,8 @@ class Player extends PositionComponent with HasGameRef {
         position: gameRef.size / 2,
         size: Vector2(16, 32));
     add(move);
+
+
 
     // add(SpriteComponent.fromImage(image, position: gameRef.size/2));
     // add(TextComponent(position: gameRef.size/2, text: "aaaaaaaaaa"));
