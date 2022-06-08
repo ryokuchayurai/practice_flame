@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/sprite.dart';
+import 'package:practice_flame/magic.dart';
 import 'package:practice_flame/main.dart';
 
-class Character extends SpriteAnimationComponent {
+class Character extends SpriteAnimationComponent with HasGameRef {
   Character(this.sheet);
 
   final SpriteSheet sheet;
@@ -87,6 +90,32 @@ class Character extends SpriteAnimationComponent {
         animation = front;
         break;
     }
+  }
+
+  void fire(){
+    final m = Magic()..position = position;
+    switch (_direction) {
+      case JoystickDirection.up:
+      case JoystickDirection.upLeft:
+      case JoystickDirection.upRight:
+        m.velocity.y = -1;
+        m.angle = -90 * degrees2Radians;
+        break;
+      case JoystickDirection.left:
+        m.velocity.x = -1;
+        m.angle = 180 * degrees2Radians;
+        break;
+      case JoystickDirection.right:
+        m.velocity.x = 1;
+        break;
+      case JoystickDirection.down:
+      case JoystickDirection.downLeft:
+      case JoystickDirection.downRight:
+        m.velocity.y = 1;
+        m.angle = 90 * degrees2Radians;
+        break;
+    }
+    gameRef.add(m);
   }
 
   @override

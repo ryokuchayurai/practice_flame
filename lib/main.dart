@@ -485,6 +485,8 @@ class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
         _character.move(JoystickDirection.down);
       } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
         _character.move(JoystickDirection.right);
+      } else if (event.logicalKey == LogicalKeyboardKey.space) {
+        _character.fire();
       }
     }
 
