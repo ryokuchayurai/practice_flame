@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flame/components.dart';
+import 'package:flame/components.dart' hide Timer;
+import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
@@ -17,6 +19,8 @@ import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:practice_flame/character.dart';
+import 'package:practice_flame/human1.dart';
+import 'package:practice_flame/map_game.dart';
 import 'package:tiled/tiled.dart';
 import 'package:flutter/material.dart' hide Image;
 
@@ -35,7 +39,7 @@ class MyAppHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameWidget(
-      game: TiledGame(),
+      game: MapGame(),
     );
   }
 }
@@ -240,7 +244,7 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
 
   @override
   Future<void> onLoad() async {
-
+    camera.viewport = FixedResolutionViewport(Vector2(400, 300));
 
     coins = await Flame.images.load('coins.png');
     add(TextComponent(
@@ -273,6 +277,96 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
         ),
       ),
     );
+
+    final image = await images.load('magic-arrow.png');
+    final spriteSheet = SpriteSheet(image: image, srcSize: Vector2(8,5));
+    final arrow = spriteSheet.createAnimation(row: 0, stepTime: 0.1, loop: true, from: 0, to: 2);
+
+    final rnd = Random();
+
+    Timer.periodic(Duration(milliseconds: 1000), (_) {
+      add(ParticleSystemComponent(
+          position: Vector2(300,100),
+          particle: Particle.generate(
+            count: 50,
+            generator: (i) => RotatingParticle(
+              to: 1 * pi,
+                child: MovingParticle(
+              curve: Curves.easeOutQuad,
+              from: randomCellVector2()..scale(.05),
+              to: Vector2.zero(),
+              child: CircleParticle(
+                radius: 1 + rnd.nextDouble() * 1,
+                paint: Paint()..color = Colors.lightBlueAccent.withOpacity(0.6),
+              ),
+            )),
+          )
+      ));
+      Timer(Duration(milliseconds: 850), () {
+        add(ParticleSystemComponent(
+            position: Vector2(300, 100),
+            particle: Particle.generate(
+              lifespan: 0.1,
+              count: 20,
+              generator: (i) =>
+                  MovingParticle(
+                      curve: Curves.easeOutCubic,
+                      from: Vector2.zero(),
+                      to: Vector2.random()
+                        ..multiply(Vector2(-500, random.nextInt(100) - 50)),
+                      child: CircleParticle(
+                        radius: 1,
+                        paint: Paint()
+                          ..color = Colors.white.withOpacity(0.6),
+                      )
+                  ),
+            )
+        ));
+      });
+      Timer(Duration(milliseconds: 550), (){
+        add(ParticleSystemComponent(
+            position: Vector2(300,100),
+            particle: Particle.generate(
+              count: 1,
+              generator: (i) => MovingParticle(
+                curve: Curves.easeInCubic,
+                from: Vector2.zero(),
+                to: Vector2(-300,0),
+                // child: CircleParticle(
+                //     radius: 4,
+                //     paint: Paint()..color = Colors.lightBlueAccent,
+                //   )
+                // ),
+                child: SpriteAnimationParticle(
+                  animation: arrow,
+                  size: Vector2(8, 5),
+                )
+              ),
+            )
+        ));
+      });
+    });
+
+    Timer.periodic(Duration(milliseconds: 100), (_) {
+      add(ParticleSystemComponent(
+          position: Vector2(200, 200),
+          particle: Particle.generate(
+            lifespan: 2,
+            count: 20,
+            generator: (i) =>
+                MovingParticle(
+                    curve: Curves.easeInCubic,
+                    from: Vector2(random.nextInt(50) - 25, 0),
+                    to: Vector2(random.nextInt(50) - 25, -60 - random.nextInt(20).toDouble()),
+                    child: CircleParticle(
+                      radius: 1,
+                      paint: Paint()
+                        ..color = Colors.white.withOpacity(0.2),
+                    )
+                ),
+          )
+      ));
+    });
   }
 
   @override
@@ -396,13 +490,22 @@ class TestGame extends FlameGame with TapDetector, KeyboardEvents {
   }
 }
 
-class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
+class Test2Game extends FlameGame with HasDraggables, KeyboardEvents, HasPaint, HasKeyboardHandlerComponents {
   late JoystickComponent joystick;
   late Character _character;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    
+    add(ColorEffect(Colors.blue, const Offset(
+      0.0,
+      0.8,
+    ), EffectController(
+      duration: 1.5,
+      reverseDuration: 1.5,
+      infinite: true,
+    ),));
 
     // camera.viewport = FixedResolutionViewport(Vector2(100, 200));
     camera.viewport = FixedResolutionViewport(Vector2(400, 300));
@@ -432,32 +535,55 @@ class Test2Game extends FlameGame with HasDraggables, KeyboardEvents {
 
     add(Player(joystick));
 
-    final image2 = await images.load('fuji.png');
-    final sprite = Sprite(image2);
-    add(
-      SpriteComponent(
-        sprite: sprite,
-            position: Vector2(0,100),
-          size: Vector2(160,168)
-      )
-    );
-
-    final sprite2 = await copyImage(sprite);
-    add(
-        SpriteComponent(
-            sprite: sprite2,
-          position: Vector2(161,100),
-
-            size: Vector2(160, 168)
-        )
-    );
+    // final image2 = await images.load('fuji.png');
+    // final sprite = Sprite(image2);
+    // add(
+    //   SpriteComponent(
+    //     sprite: sprite,
+    //         position: Vector2(0,100),
+    //       size: Vector2(160,168)
+    //   )
+    // );
+    //
+    // final sprite2 = await copyImage(sprite);
+    // add(
+    //     SpriteComponent(
+    //         sprite: sprite2,
+    //       position: Vector2(161,100),
+    //
+    //         size: Vector2(160, 168)
+    //     )
+    // );
 
     _character = Character(sheet)..position = Vector2(300, 100);
     add(_character);
 
     var front = sheet.createAnimation(row: 0, stepTime: 0.2, loop: true, from: 0, to: 1);
     add(SpriteComponent(sprite: front.frames[0].sprite));
-    debugPrint('------ ${front.frames.length}');
+
+    add(Human());
+
+    final random = Random();
+    Timer.periodic(Duration(milliseconds: 100), (_) {
+      add(ParticleSystemComponent(
+          position: Vector2(200, 200),
+          particle: Particle.generate(
+            lifespan: 2,
+            count: 20,
+            generator: (i) =>
+                MovingParticle(
+                    curve: Curves.easeInCubic,
+                    from: Vector2(random.nextInt(50) - 25, 0),
+                    to: Vector2(random.nextInt(50) - 25, -60 - random.nextInt(20).toDouble()),
+                    child: CircleParticle(
+                      radius: 1,
+                      paint: Paint()
+                        ..color = Colors.white.withOpacity(0.2),
+                    )
+                ),
+          )
+      ));
+    });
   }
 
   @override
