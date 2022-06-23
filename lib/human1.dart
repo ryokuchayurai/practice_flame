@@ -1,9 +1,13 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/palette.dart';
+import 'package:flame/particles.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:practice_flame/magic_effect.dart';
 
@@ -25,7 +29,6 @@ extension DirectionExtension on Direction {
   int get spriteIndex => [3,3,3,1,0,0,0,2][index];
 }
 
-
 class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, CollisionCallbacks {
 
   final String _imageFile = 'human2_outline.png';
@@ -41,6 +44,8 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
 
   Direction _direction = Direction.down;
   bool _action = false;
+  Set<LogicalKeyboardKey>? _keysPressed;
+  Map<int, Set<LogicalKeyboardKey>> _collisionMap = {};
 
   @override
   Future<void> onLoad() async {
@@ -54,7 +59,15 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
     animation = idle[0];
     size = _size;
 
-    debugPrint('prio===${priority}');
+    final hitboxPaint = BasicPalette.white.paint()
+      ..style = PaintingStyle.stroke;
+    add(
+      RectangleHitbox(
+        position: Vector2(0, 24),
+        size: Vector2(16, 8),
+      )..paint = hitboxPaint
+        ..renderShape = true,
+    );
   }
 
   List<SpriteAnimation> _create4DirectionAnimation(SpriteSheet sheet, double stepTime, int from, int to) {
@@ -68,55 +81,82 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
 
   @override
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    final isKeyDown = event is RawKeyDownEvent;
-
-    final bool handled;
-    if (event.logicalKey == LogicalKeyboardKey.keyA) {
-      velocity.x = isKeyDown ? -1 : 0;
-      handled = true;
-    } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
-      velocity.x = isKeyDown ? 1 : 0;
-      handled = true;
-    } else if (event.logicalKey == LogicalKeyboardKey.keyW) {
-      velocity.y = isKeyDown ? -1 : 0;
-      handled = true;
-    } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
-      velocity.y = isKeyDown ? 1 : 0;
-      handled = true;
-    } else if (event.logicalKey == LogicalKeyboardKey.space) {
-      velocity.x = 0;
-      velocity.y = 0;
-      _action = isKeyDown;
-      if (isKeyDown) {
-        _startMagicEffect();
-      } else {
-        _stopMagicEffect();
-      }
-      handled = true;
-    } else {
-      handled = false;
-    }
-
-    if (handled) {
-      if (velocity.isZero()) {
-        animation = _action ? action[_direction.spriteIndex]: idle[_direction.spriteIndex];
-        if (_action) {
-
-        }
-      } else {
-        _direction = getDirection();
-        animation = move[_direction.spriteIndex];
-      }
-
-      return false;
-    } else {
-      return super.onKeyEvent(event, keysPressed);
-    }
+    _keysPressed = keysPressed;
+    return super.onKeyEvent(event, keysPressed);
+    // final isKeyDown = event is RawKeyDownEvent;
+    //
+    // final bool handled;
+    // if (event.logicalKey == LogicalKeyboardKey.keyA) {
+    //   velocity.x = isKeyDown ? -1 : 0;
+    //   handled = true;
+    // } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
+    //   velocity.x = isKeyDown ? 1 : 0;
+    //   handled = true;
+    // } else if (event.logicalKey == LogicalKeyboardKey.keyW) {
+    //   velocity.y = isKeyDown ? -1 : 0;
+    //   handled = true;
+    // } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
+    //   velocity.y = isKeyDown ? 1 : 0;
+    //   handled = true;
+    // } else if (event.logicalKey == LogicalKeyboardKey.space) {
+    //   velocity.x = 0;
+    //   velocity.y = 0;
+    //   _action = isKeyDown;
+    //   if (isKeyDown) {
+    //     _startMagicEffect();
+    //   } else {
+    //     _stopMagicEffect();
+    //   }
+    //   handled = true;
+    // } else {
+    //   handled = false;
+    // }
+    //
+    // if (handled) {
+    //   if (velocity.isZero()) {
+    //     animation = _action ? action[_direction.spriteIndex]: idle[_direction.spriteIndex];
+    //     if (_action) {
+    //
+    //     }
+    //   } else {
+    //     _direction = getDirection();
+    //     animation = move[_direction.spriteIndex];
+    //   }
+    //
+    //   return false;
+    // } else {
+    //   return super.onKeyEvent(event, keysPressed);
+    // }
   }
 
   @override
   void update(double dt) {
     super.update(dt);
+
+    velocity.x = 0;
+    velocity.y = 0;
+    _keysPressed?.forEach((element) {
+      // final collision = _collisionKeysPressed.contains(element);
+      final collision = _collisionMap.values.where((e) => e.contains(element)).isNotEmpty;
+
+      if (element == LogicalKeyboardKey.keyW && !collision) {
+        velocity.y += -1;
+      } else if (element == LogicalKeyboardKey.keyA && !collision) {
+        velocity.x += -1;
+      } else if (element == LogicalKeyboardKey.keyS && !collision) {
+        velocity.y += 1;
+      } else if (element == LogicalKeyboardKey.keyD && !collision) {
+        velocity.x += 1;
+      }
+    });
+
+    if (velocity.isZero()) {
+      animation = _action ? action[_direction.spriteIndex]: idle[_direction.spriteIndex];
+    } else {
+      _direction = getDirection();
+      animation = move[_direction.spriteIndex];
+    }
+
     final deltaPosition = velocity * (speed * dt);
     position.add(deltaPosition);
   }
@@ -176,6 +216,46 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
       PositionComponent other,
       ) {
     super.onCollisionStart(intersectionPoints, other);
-    velocity.negate();
+
+    intersectionPoints.forEach((element) {
+      _test(element);
+    });
+
+    _collisionMap[other.hashCode] = <LogicalKeyboardKey>{};
+    _keysPressed?.forEach((element) {
+      _collisionMap[other.hashCode]?.add(element);
+    });
   }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+
+    _collisionMap.remove(other.hashCode);
+  }
+
+  void _test(Vector2 pos) {
+    gameRef.add(
+      ParticleSystemComponent(
+        priority: 1000,
+        position: pos,
+        particle: Particle.generate(
+          count: 1,
+          lifespan: 3,
+          generator: (i) {
+            return MovingParticle(
+              from: Vector2.zero(),
+              to: Vector2.zero(),
+              child: CircleParticle(
+                radius: 1,
+                paint: Paint()
+                  ..color = Colors.white,
+              )
+            );
+          },
+        ),
+      ),
+    );
+  }
+
 }

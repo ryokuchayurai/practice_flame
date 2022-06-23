@@ -9,10 +9,14 @@ import 'package:flutter/widgets.dart';
 import 'package:practice_flame/human1.dart';
 import 'package:tiled/tiled.dart';
 
-class MapGame extends FlameGame with HasKeyboardHandlerComponents {
+class MapGame extends FlameGame with HasKeyboardHandlerComponents, HasCollisionDetection  {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    final v1 = Vector2(100, 100);
+    final v2 = Vector2(200, 100);
+    debugPrint('angleToSigned: ${v1.angleTo(v2) * radians2Degrees}');
 
     camera.viewport = FixedResolutionViewport(Vector2(400, 300));
 
