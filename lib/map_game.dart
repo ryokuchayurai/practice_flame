@@ -4,6 +4,7 @@ import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
 import 'package:flame_tiled/flame_tiled.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:practice_flame/human1.dart';
@@ -56,6 +57,18 @@ class MapGame extends FlameGame with HasKeyboardHandlerComponents, HasCollisionD
     add(human);
 
     camera.followComponent(human, worldBounds: Rect.fromLTRB(0, 0, 100 * 16, 100 * 16));
+
+    add(RectangleComponent(position:Vector2.zero(), size:Vector2(400,300),
+        priority: 10000,
+        paint:Paint()..color=Colors.red.withOpacity(0.3)  ));
+
+    add(CircleComponent(position: Vector2(100,100),radius: 100,
+        priority: 10001,
+        paint: Paint()..color=Colors.white.withOpacity(0.1)
+        ..blendMode=BlendMode.lighten
+    ));
+    
+    add(FpsTextComponent());
   }
 
 }

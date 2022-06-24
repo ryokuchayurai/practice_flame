@@ -40,6 +40,7 @@ class MyAppHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return GameWidget(
       game: MapGame(),
+      // game: TiledGame(),
     );
   }
 }
