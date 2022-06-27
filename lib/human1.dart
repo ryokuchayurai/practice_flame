@@ -68,6 +68,12 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
       )..paint = hitboxPaint
         ..renderShape = true,
     );
+
+    add(CircleComponent(radius: 32,
+      position: Vector2(-24,-12),
+      paint: Paint()..color = Colors.white.withOpacity(0.2)
+        ..blendMode =BlendMode.plus
+    ));
   }
 
   List<SpriteAnimation> _create4DirectionAnimation(SpriteSheet sheet, double stepTime, int from, int to) {

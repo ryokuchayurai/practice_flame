@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:practice_flame/human1.dart';
+import 'package:practice_flame/monster.dart';
 import 'package:tiled/tiled.dart';
 
 class MapGame extends FlameGame with HasKeyboardHandlerComponents, HasCollisionDetection  {
@@ -19,7 +22,7 @@ class MapGame extends FlameGame with HasKeyboardHandlerComponents, HasCollisionD
     final v2 = Vector2(200, 100);
     debugPrint('angleToSigned: ${v1.angleTo(v2) * radians2Degrees}');
 
-    camera.viewport = FixedResolutionViewport(Vector2(400, 300));
+    camera.viewport = FixedResolutionViewport(Vector2(400, 320));
 
     final tiledMap = await TiledComponent.load('danchi.tmx', Vector2.all(16));
     tiledMap.tileMap.setLayerVisibility(0, true);
@@ -58,17 +61,37 @@ class MapGame extends FlameGame with HasKeyboardHandlerComponents, HasCollisionD
 
     camera.followComponent(human, worldBounds: Rect.fromLTRB(0, 0, 100 * 16, 100 * 16));
 
-    add(RectangleComponent(position:Vector2.zero(), size:Vector2(400,300),
+    add(RectangleComponent(position:Vector2.zero(), size:Vector2(4000,3000),
         priority: 10000,
-        paint:Paint()..color=Colors.red.withOpacity(0.3)  ));
+        paint:Paint()..color=Colors.black.withOpacity(0.3)  ));
 
-    add(CircleComponent(position: Vector2(100,100),radius: 100,
-        priority: 10001,
-        paint: Paint()..color=Colors.white.withOpacity(0.1)
-        ..blendMode=BlendMode.lighten
-    ));
-    
+    double x = 10;
+    double y = 100;
+    for(final bm in BlendMode.values) {
+      add(TextComponent(text:'${bm.toString()}',
+          position: Vector2(x,y),
+          textRenderer: TextPaint(
+            style: TextStyle(
+              fontSize: 8
+            ))
+      ));
+      add(CircleComponent(position: Vector2(x,y),radius: 10,
+          priority: 10001,
+          paint: Paint()..color=Colors.black.withOpacity(0.1)
+            ..blendMode=bm
+      ));
+      x+=100;
+    }
+
     add(FpsTextComponent());
+
+    final rnd = Random();
+    for(int i = 0;i<100;i++) {
+      final s = rnd.nextDouble()*3;
+      add(Monster(human)..position = Vector2(rnd.nextDouble() * 1600, rnd.nextDouble() * 1600)
+          ..scale = Vector2(s, s)
+      );
+    }
   }
 
 }
