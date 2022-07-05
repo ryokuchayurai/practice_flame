@@ -1,15 +1,16 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/particles.dart';
 import 'package:flame/sprite.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:practice_flame/bat.dart';
 import 'package:practice_flame/magic_effect.dart';
+import 'package:practice_flame/monster.dart';
 
 enum Direction {
   up,
@@ -26,11 +27,11 @@ extension DirectionExtension on Direction {
   // static Direction createDegree(double d) {
   //   if(d)
   // }
-  int get spriteIndex => [3,3,3,1,0,0,0,2][index];
+  int get spriteIndex => [3, 3, 3, 1, 0, 0, 0, 2][index];
 }
 
-class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, CollisionCallbacks {
-
+class Human extends SpriteAnimationComponent
+    with HasGameRef, KeyboardHandler, CollisionCallbacks {
   final String _imageFile = 'human2_outline.png';
   final Vector2 _size = Vector2(16, 32);
 
@@ -65,29 +66,41 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
       RectangleHitbox(
         position: Vector2(0, 24),
         size: Vector2(16, 8),
-      )..paint = hitboxPaint
+      )
+        ..paint = hitboxPaint
         ..renderShape = true,
     );
 
-    add(CircleComponent(radius: 32,
-      position: Vector2(-24,-12),
-      paint: Paint()..color = Colors.white.withOpacity(0.2)
-        ..blendMode =BlendMode.plus
-    ));
+    // add(CircleComponent(
+    //     radius: 32,
+    //     position: Vector2(-24, -12),
+    //     paint: Paint()
+    //       ..color = Colors.lightBlue.withOpacity(0.6)
+    //       ..blendMode = BlendMode.plus));
   }
 
-  List<SpriteAnimation> _create4DirectionAnimation(SpriteSheet sheet, double stepTime, int from, int to) {
+  List<SpriteAnimation> _create4DirectionAnimation(
+      SpriteSheet sheet, double stepTime, int from, int to) {
     return [
-      sheet.createAnimation(row: 0, stepTime: stepTime, loop: true, from: from, to: to),
-      sheet.createAnimation(row: 1, stepTime: stepTime, loop: true, from: from, to: to),
-      sheet.createAnimation(row: 2, stepTime: stepTime, loop: true, from: from, to: to),
-      sheet.createAnimation(row: 3, stepTime: stepTime, loop: true, from: from, to: to),
+      sheet.createAnimation(
+          row: 0, stepTime: stepTime, loop: true, from: from, to: to),
+      sheet.createAnimation(
+          row: 1, stepTime: stepTime, loop: true, from: from, to: to),
+      sheet.createAnimation(
+          row: 2, stepTime: stepTime, loop: true, from: from, to: to),
+      sheet.createAnimation(
+          row: 3, stepTime: stepTime, loop: true, from: from, to: to),
     ];
   }
 
   @override
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     _keysPressed = keysPressed;
+    final isKeyDown = event is RawKeyDownEvent;
+    if (event.logicalKey == LogicalKeyboardKey.space && isKeyDown) {
+      final bat = Bat(_direction, onComplete: (b) => remove(b));
+      add(bat);
+    }
     return super.onKeyEvent(event, keysPressed);
     // final isKeyDown = event is RawKeyDownEvent;
     //
@@ -143,7 +156,8 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
     velocity.y = 0;
     _keysPressed?.forEach((element) {
       // final collision = _collisionKeysPressed.contains(element);
-      final collision = _collisionMap.values.where((e) => e.contains(element)).isNotEmpty;
+      final collision =
+          _collisionMap.values.where((e) => e.contains(element)).isNotEmpty;
 
       if (element == LogicalKeyboardKey.keyW && !collision) {
         velocity.y += -1;
@@ -157,7 +171,9 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
     });
 
     if (velocity.isZero()) {
-      animation = _action ? action[_direction.spriteIndex]: idle[_direction.spriteIndex];
+      animation = _action
+          ? action[_direction.spriteIndex]
+          : idle[_direction.spriteIndex];
     } else {
       _direction = getDirection();
       animation = move[_direction.spriteIndex];
@@ -206,9 +222,13 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
     canvas.save();
     canvas.transform(transformMatrix.storage);
 
-    children.where((element) => element.priority < 0).forEach((c) => c.renderTree(canvas));
+    children
+        .where((element) => element.priority < 0)
+        .forEach((c) => c.renderTree(canvas));
     render(canvas);
-    children.where((element) => element.priority >= 0).forEach((c) => c.renderTree(canvas));
+    children
+        .where((element) => element.priority >= 0)
+        .forEach((c) => c.renderTree(canvas));
     if (debugMode) {
       renderDebugMode(canvas);
     }
@@ -218,14 +238,23 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
 
   @override
   void onCollisionStart(
-      Set<Vector2> intersectionPoints,
-      PositionComponent other,
-      ) {
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
     super.onCollisionStart(intersectionPoints, other);
 
     intersectionPoints.forEach((element) {
       _test(element);
     });
+
+    if (other is Monster) {
+      debugPrint('monster!');
+      add(ColorEffect(
+          Colors.white,
+          const Offset(0, 1),
+          EffectController(
+              duration: 0.1, reverseDuration: 0.1, repeatCount: 10)));
+    }
 
     _collisionMap[other.hashCode] = <LogicalKeyboardKey>{};
     _keysPressed?.forEach((element) {
@@ -250,18 +279,15 @@ class Human extends SpriteAnimationComponent with HasGameRef, KeyboardHandler, C
           lifespan: 3,
           generator: (i) {
             return MovingParticle(
-              from: Vector2.zero(),
-              to: Vector2.zero(),
-              child: CircleParticle(
-                radius: 1,
-                paint: Paint()
-                  ..color = Colors.white,
-              )
-            );
+                from: Vector2.zero(),
+                to: Vector2.zero(),
+                child: CircleParticle(
+                  radius: 1,
+                  paint: Paint()..color = Colors.white,
+                ));
           },
         ),
       ),
     );
   }
-
 }
