@@ -89,7 +89,7 @@ class MapGame extends FlameGame
     add(FpsTextComponent());
 
     final rnd = Random();
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 20; i++) {
       final s = rnd.nextDouble() * 3;
       add(Monster(human)
         ..position = Vector2(rnd.nextDouble() * 1600, rnd.nextDouble() * 1600)

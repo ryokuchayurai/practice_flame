@@ -1,6 +1,9 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
+import 'package:flame/palette.dart';
+import 'package:flutter/material.dart';
 import 'package:practice_flame/human1.dart';
 
 class Bat extends SpriteComponent with HasGameRef {
@@ -43,6 +46,14 @@ class Bat extends SpriteComponent with HasGameRef {
     }
 
     angle = degrees2Radians * fromDeg;
+
+    final hitboxPaint = BasicPalette.red.paint()..style = PaintingStyle.stroke;
+    add(RectangleHitbox(
+      position: Vector2(0, 0),
+      size: size,
+    )
+      ..paint = hitboxPaint
+      ..renderShape = true);
 
     add(
       RotateEffect.to(

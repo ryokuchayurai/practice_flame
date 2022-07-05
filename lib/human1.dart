@@ -248,12 +248,12 @@ class Human extends SpriteAnimationComponent
     });
 
     if (other is Monster) {
-      debugPrint('monster!');
       add(ColorEffect(
           Colors.white,
           const Offset(0, 1),
           EffectController(
               duration: 0.1, reverseDuration: 0.1, repeatCount: 10)));
+      return;
     }
 
     _collisionMap[other.hashCode] = <LogicalKeyboardKey>{};

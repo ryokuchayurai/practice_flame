@@ -35,6 +35,7 @@ flutter:
     - assets/images/mapchip.png
     - assets/images/monster1.png
     - assets/images/sprite-sheet-humn.png
+    - assets/images/he.png
     - assets/images/sprite-sheet-humn.json
     - assets/images/arrow.png
     - assets/images/white.png
