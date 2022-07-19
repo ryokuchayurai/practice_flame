@@ -126,7 +126,7 @@ packages:
       name: ffi
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.0"
+    version: "1.2.1"
   file:
     dependency: transitive
     description:
@@ -295,7 +295,7 @@ packages:
       name: path_provider_windows
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.0"
+    version: "2.0.7"
   petitparser:
     dependency: transitive
     description:
@@ -412,7 +412,14 @@ packages:
       name: win32
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.7.0"
+    version: "2.6.1"
+  win32_gamepad:
+    dependency: "direct main"
+    description:
+      name: win32_gamepad
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2"
   xdg_directories:
     dependency: transitive
     description:

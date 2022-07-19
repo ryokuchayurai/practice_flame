@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flame/collisions.dart';
@@ -11,18 +12,31 @@ import 'package:flutter/widgets.dart';
 import 'package:practice_flame/human1.dart';
 import 'package:practice_flame/monster.dart';
 import 'package:tiled/tiled.dart';
+import 'package:win32_gamepad/win32_gamepad.dart';
 
 import 'a_star.dart';
 
 class MapGame extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
+  late final TextComponent gempoint;
+  late final TextComponent hitpoint;
+
+  late final Gamepad? gamepad;
+
+  late final Human human;
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    final v1 = Vector2(100, 100);
-    final v2 = Vector2(200, 100);
-    debugPrint('angleToSigned: ${v1.angleTo(v2) * radians2Degrees}');
+    if (Platform.isWindows) {
+      gamepad = Gamepad(0);
+      // for (var idx = 0; idx < 4; idx++) {
+      //   final gpad = Gamepad(idx);
+      //   print(
+      //       'Gamepad $idx is ${gpad.state.isConnected ? 'connected' : 'disconnected'}.');
+      // }
+    }
 
     camera.viewport = FixedResolutionViewport(Vector2(400, 320));
 
@@ -57,7 +71,7 @@ class MapGame extends FlameGame
     tiledMapPassable.priority = 100;
     add(tiledMapPassable);
 
-    final human = Human();
+    human = Human();
     add(human);
 
     camera.followComponent(human,
@@ -89,7 +103,7 @@ class MapGame extends FlameGame
     add(FpsTextComponent());
 
     final rnd = Random();
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 0; i++) {
       final s = rnd.nextDouble() * 3;
       add(Monster(human)
         ..position = Vector2(rnd.nextDouble() * 1600, rnd.nextDouble() * 1600)
@@ -115,7 +129,6 @@ class MapGame extends FlameGame
       for (int x = 0; x < 100; x++) {
         final node = map[y]![x];
         if (node == null) {
-          debugPrint('uoooo');
           continue;
         }
 
@@ -148,6 +161,33 @@ class MapGame extends FlameGame
     add(Monster(human, path: result)
       ..position = Vector2.zero()
       ..scale = Vector2(0.5, 0.5));
+
+    gempoint = TextComponent(position: Vector2(320, 0));
+    gempoint.textRenderer =
+        TextPaint(style: TextStyle(color: Colors.black, fontSize: 20));
+    gempoint.positionType = PositionType.viewport;
+    gempoint.priority = double.maxFinite.toInt();
+    add(gempoint);
+
+    hitpoint = TextComponent(text: '10', position: Vector2(320, 20));
+    hitpoint.textRenderer =
+        TextPaint(style: TextStyle(color: Colors.black, fontSize: 20));
+    hitpoint.positionType = PositionType.viewport;
+    hitpoint.priority = double.maxFinite.toInt();
+    add(hitpoint);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (gamepad?.isConnected ?? false) {
+      gamepad?.updateState();
+      human.onGamepadEvent(gamepad!.state);
+    }
+  }
+
+  void test() {
+    // gamepad?.vibrate(leftMotorSpeed: 100, rightMotorSpeed: 100);
   }
 
   void aStar() {}

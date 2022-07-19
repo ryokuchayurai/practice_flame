@@ -21,6 +21,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   google_fonts: ^3.0.1
+  win32_gamepad: ^1.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -28,25 +29,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/tiles/map.tmx
-    - assets/tiles/danchi.tmx
-    - assets/tiles/mapchip.tsx
-    - assets/images/map-level1.png
-    - assets/images/map-level2.png
-    - assets/images/mapchip.png
-    - assets/images/monster1.png
-    - assets/images/sprite-sheet-humn.png
-    - assets/images/he.png
-    - assets/images/sprite-sheet-humn.json
-    - assets/images/arrow.png
-    - assets/images/white.png
-    - assets/images/black.png
-    - assets/images/coins.png
-    - assets/images/fuji.png
-    - assets/images/bat.png
-    - assets/images/human2_outline.png
-    - assets/images/magic-effect.png
-    - assets/images/magic-arrow.png
+    - assets/tiles/
+    - assets/images/
     - assets/audio/music/bg_music.ogg
     - assets/audio/sfx/fire_1.mp3
     - assets/audio/sfx/fire_2.mp3

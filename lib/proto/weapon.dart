@@ -1,16 +1,15 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
-import 'package:practice_flame/human1.dart';
+import 'package:practice_flame/proto/direction.dart';
 
-class Bat extends SpriteComponent with HasGameRef {
-  Bat(this.direction, {this.onComplete});
+class ProtoWeapon extends SpriteComponent with HasGameRef {
+  ProtoWeapon(this.direction, {this.onComplete});
 
-  final Direction direction;
-  final void Function(Bat)? onComplete;
+  final EightDirection direction;
+  final void Function()? onComplete;
   late final Vector2 force;
 
   @override
@@ -23,32 +22,32 @@ class Bat extends SpriteComponent with HasGameRef {
     double fromDeg = 0;
     double toDeg = 0;
     switch (direction) {
-      case Direction.up:
-      case Direction.upLeft:
-      case Direction.upRight:
+      case EightDirection.up:
+      case EightDirection.upLeft:
+      case EightDirection.upRight:
         fromDeg = 0;
         toDeg = 180;
-        force = Vector2(0, -50);
+        force = Vector2(0, -20);
         position = Vector2(3, 13);
         break;
-      case Direction.left:
+      case EightDirection.left:
         fromDeg = 90;
         toDeg = -90;
-        force = Vector2(-50, 0);
+        force = Vector2(-20, 0);
         position = Vector2(3, 18);
         break;
-      case Direction.right:
+      case EightDirection.right:
         fromDeg = 90;
         toDeg = 270;
-        force = Vector2(50, 0);
+        force = Vector2(20, 0);
         position = Vector2(15, 18);
         break;
-      case Direction.down:
-      case Direction.downLeft:
-      case Direction.downRight:
+      case EightDirection.down:
+      case EightDirection.downLeft:
+      case EightDirection.downRight:
         fromDeg = 0;
         toDeg = -180;
-        force = Vector2(0, 50);
+        force = Vector2(0, 20);
         position = Vector2(3, 25);
         break;
     }
@@ -61,12 +60,15 @@ class Bat extends SpriteComponent with HasGameRef {
       size: size,
     )
       ..paint = hitboxPaint
-      ..renderShape = true);
+      ..renderShape = false);
 
     add(
       RotateEffect.to(
         degrees2Radians * toDeg,
-        onComplete: () => onComplete?.call(this),
+        onComplete: () {
+          removeFromParent();
+          onComplete?.call();
+        },
         EffectController(
           duration: 0.2,
           infinite: false,

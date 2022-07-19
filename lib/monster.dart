@@ -9,6 +9,7 @@ import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'package:practice_flame/bat.dart';
+import 'package:practice_flame/gem.dart';
 import 'package:practice_flame/human1.dart';
 import 'package:practice_flame/map_game.dart';
 
@@ -77,6 +78,7 @@ class Monster extends SpriteAnimationComponent
       hp--;
       if (hp < 0) {
         removeFromParent();
+        gameRef.add(Gem()..position = position);
       }
       add(ColorEffect(
           Colors.white,
@@ -85,7 +87,7 @@ class Monster extends SpriteAnimationComponent
               duration: 0.1, reverseDuration: 0.1, repeatCount: 3)));
       add(
         MoveEffect.by(
-          Vector2(-40, 0),
+          other.force,
           EffectController(
             duration: 0.25,
             infinite: false,

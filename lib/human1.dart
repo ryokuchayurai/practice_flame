@@ -9,8 +9,11 @@ import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:practice_flame/bat.dart';
+import 'package:practice_flame/gem.dart';
 import 'package:practice_flame/magic_effect.dart';
+import 'package:practice_flame/map_game.dart';
 import 'package:practice_flame/monster.dart';
+import 'package:win32_gamepad/win32_gamepad.dart';
 
 enum Direction {
   up,
@@ -47,6 +50,9 @@ class Human extends SpriteAnimationComponent
   bool _action = false;
   Set<LogicalKeyboardKey>? _keysPressed;
   Map<int, Set<LogicalKeyboardKey>> _collisionMap = {};
+
+  int gem = 0;
+  int hp = 10;
 
   @override
   Future<void> onLoad() async {
@@ -91,6 +97,31 @@ class Human extends SpriteAnimationComponent
       sheet.createAnimation(
           row: 3, stepTime: stepTime, loop: true, from: from, to: to),
     ];
+  }
+
+  void onGamepadEvent(GamepadState state) {
+    final leftstick = Vector2(
+        state.leftThumbstickX.toDouble(), state.leftThumbstickY.toDouble());
+    final keysPressed = <LogicalKeyboardKey>[];
+    if (leftstick.x > 32767 * 0.5) {
+      keysPressed.add(LogicalKeyboardKey.keyD);
+    }
+    if (leftstick.x < -32767 * 0.5) {
+      keysPressed.add(LogicalKeyboardKey.keyA);
+    }
+    if (leftstick.y > 32767 * 0.5) {
+      keysPressed.add(LogicalKeyboardKey.keyW);
+    }
+    if (leftstick.y < -32767 * 0.5) {
+      keysPressed.add(LogicalKeyboardKey.keyS);
+    }
+
+    _keysPressed = keysPressed.toSet();
+
+    if (state.buttonA) {
+      final bat = Bat(_direction, onComplete: (b) => remove(b));
+      add(bat);
+    }
   }
 
   @override
@@ -243,11 +274,24 @@ class Human extends SpriteAnimationComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
 
+    if (other is Bat) return;
+
+    if (other is Gem) {
+      gem++;
+      (gameRef as MapGame).gempoint.text = '$gemポイント';
+      other.removeFromParent();
+      return;
+    }
+
     intersectionPoints.forEach((element) {
       _test(element);
     });
 
     if (other is Monster) {
+      hp--;
+      (gameRef as MapGame).hitpoint.text = '$hp';
+      (gameRef as MapGame).test();
+
       add(ColorEffect(
           Colors.white,
           const Offset(0, 1),
