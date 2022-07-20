@@ -8,12 +8,14 @@ import 'package:flame/extensions.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
+import 'package:practice_flame/proto/gem.dart';
 import 'package:practice_flame/proto/magic.dart';
 import 'package:practice_flame/proto/proto_game.dart';
+import 'package:practice_flame/proto/proto_layer.dart';
 import 'package:practice_flame/proto/weapon.dart';
 
 class ProtoMonster extends SpriteAnimationComponent
-    with HasGameRef<ProtoGame>, CollisionCallbacks {
+    with HasGameRef<ProtoGame>, CollisionCallbacks, ComponentRef {
   ProtoMonster({super.position});
 
   final double speed = 20;
@@ -25,6 +27,7 @@ class ProtoMonster extends SpriteAnimationComponent
   @override
   Future<void> onLoad() async {
     size = Vector2(16, 16);
+    anchor = Anchor.center;
 
     final shadow = await gameRef.images.load('shadow.png');
     add(SpriteComponent.fromImage(shadow,
@@ -53,7 +56,9 @@ class ProtoMonster extends SpriteAnimationComponent
         ..renderShape = false,
     );
 
-    gameRef.getPath(position, Vector2(592, 496)).then((value) => _path = value);
+    getRef<MainLayerComponent>()
+        .getPath(position, Vector2(592, 496))
+        .then((value) => _path = value);
   }
 
   @override
@@ -82,30 +87,37 @@ class ProtoMonster extends SpriteAnimationComponent
     PositionComponent other,
   ) {
     if (other is ProtoMagic) {
-      (gameRef as ProtoGame).removeMonster(this);
-      removeFromParent();
+      _damageEffect(other.force, onComplete: () {
+        getRef<MainLayerComponent>().removeMonster(this);
+        removeFromParent();
+        getRef<MainLayerComponent>().add(ProtoGem()..position = this.position);
+      });
     }
     if (other is ProtoWeapon) {
-      // hp--;
-      // if (hp < 0) {
-      //   removeFromParent();
-      //   gameRef.add(Gem()..position = position);
-      // }
-      add(ColorEffect(
-          Colors.white,
-          const Offset(0, 1),
-          EffectController(
-              duration: 0.1, reverseDuration: 0.1, repeatCount: 3)));
-      add(
-        MoveEffect.by(
-          other.force,
+      _damageEffect(other.force, onComplete: () {
+        hp--;
+        if (hp < 0) {
+          getRef<MainLayerComponent>().removeMonster(this);
+          removeFromParent();
+          getRef<MainLayerComponent>()
+              .add(ProtoGem()..position = this.position);
+        }
+      });
+    }
+  }
+
+  void _damageEffect(Vector2 force, {Function()? onComplete}) {
+    add(ColorEffect(Colors.white, const Offset(0, 1),
+        EffectController(duration: 0.1, reverseDuration: 0.1, repeatCount: 3)));
+    add(
+      MoveEffect.by(
+          force,
           EffectController(
             duration: 0.25,
             infinite: false,
           ),
-        ),
-      );
-    }
+          onComplete: onComplete),
+    );
   }
 }
 

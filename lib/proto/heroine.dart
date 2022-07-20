@@ -10,9 +10,9 @@ import 'package:practice_flame/proto/character.dart';
 import 'package:practice_flame/proto/direction.dart';
 import 'package:practice_flame/proto/magic.dart';
 import 'package:practice_flame/proto/monster.dart';
-import 'package:practice_flame/proto/proto_game.dart';
+import 'package:practice_flame/proto/proto_layer.dart';
 
-class Heroine extends Character {
+class Heroine extends Character with ComponentRef {
   final String _imageFile = 'human3_outline.png';
 
   final idle = <SpriteAnimation>[];
@@ -48,7 +48,8 @@ class Heroine extends Character {
   void update(double dt) {
     super.update(dt);
 
-    final monster = (gameRef as ProtoGame).getNearMonster(position, range: 500);
+    final monster =
+        getRef<MainLayerComponent>().getNearMonster(position, range: 500);
     if (monster != null && _castTimer == null) {
       startCast(monster);
     }
@@ -82,7 +83,8 @@ class Heroine extends Character {
 
       final from = position.clone()..add(Vector2(size.x / 2, 0));
 
-      gameRef.add(ProtoMagic(position: from, target: monster.position));
+      getRef<MainLayerComponent>()
+          .add(ProtoMagic(position: from, target: monster.position));
 
       Timer(Duration(milliseconds: 1000), () {
         animation = idle[EightDirection.down.spriteIndex];

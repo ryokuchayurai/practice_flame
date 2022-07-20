@@ -9,6 +9,7 @@ class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
 
   final Vector2 target;
   final double speed = 200;
+  late Vector2 force;
   late Vector2 targetFar;
 
   @override
@@ -16,6 +17,7 @@ class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
     size = Vector2(10, 5);
 
     angle = atan2(target.y - position.y, target.x - position.x);
+    force = Vector2(cos(angle) * 70, sin(angle) * 70);
     targetFar = Vector2(cos(angle) * 1000000, sin(angle) * 1000000);
 
     final image = await gameRef.images.load('magic-arrow.png');
