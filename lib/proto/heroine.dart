@@ -77,7 +77,7 @@ class Heroine extends Character with ComponentRef {
           )));
     });
 
-    Timer(Duration(milliseconds: 2000), () {
+    Timer(Duration(milliseconds: 200), () {
       _castTimer?.cancel();
       animation = cast[1];
 
@@ -86,7 +86,7 @@ class Heroine extends Character with ComponentRef {
       getRef<MainLayerComponent>()
           .add(ProtoMagic(position: from, target: monster.position));
 
-      Timer(Duration(milliseconds: 1000), () {
+      Timer(Duration(milliseconds: 100), () {
         animation = idle[EightDirection.down.spriteIndex];
         _castTimer = null;
       });

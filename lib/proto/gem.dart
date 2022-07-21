@@ -4,6 +4,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
+import 'package:practice_flame/proto/hitbox.dart';
 
 class ProtoGem extends SpriteAnimationComponent
     with HasGameRef, CollisionCallbacks {
@@ -19,9 +20,11 @@ class ProtoGem extends SpriteAnimationComponent
     final hitboxPaint = BasicPalette.white.paint()
       ..style = PaintingStyle.stroke;
     add(
-      RectangleHitbox(
+      ProtoHitbox(
+        'gem',
         position: Vector2(0, 0),
         size: Vector2(5, 9),
+        ignore: ['monster'],
       )
         ..paint = hitboxPaint
         ..renderShape = true,

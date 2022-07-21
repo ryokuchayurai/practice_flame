@@ -4,15 +4,19 @@ import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart' hide Timer;
+import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:practice_flame/a_star.dart';
 import 'package:practice_flame/proto/heroine.dart';
+import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/main_player.dart';
 import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/proto_game.dart';
+import 'package:practice_flame/proto/proto_text_component.dart';
 import 'package:tiled/tiled.dart';
 
 abstract class ProtoLayerComponent extends Component {
@@ -46,6 +50,11 @@ class MenuLayerComponent extends ProtoLayerComponent
   @override
   bool get isShow => _isShow;
 
+  late final NineTileBoxComponent _menuFrame;
+  late final RectangleComponent _cursorRect;
+
+  int _cursor = 0;
+
   @override
   Future<void> onLoad() async {
     priority = 100000;
@@ -54,17 +63,72 @@ class MenuLayerComponent extends ProtoLayerComponent
     final sprite = Sprite(await gameRef.images.load('nine-tile.png'));
     final nineTileBox = NineTileBox(sprite);
 
-    add(NineTileBoxComponent(
+    add(_menuFrame = NineTileBoxComponent(
       nineTileBox: nineTileBox,
-      position: Vector2(50, 10),
-      size: Vector2(300, 50),
-    )
-      ..add(TextComponent(
-          text: "メニュー",
-          textRenderer:
-              TextPaint(style: TextStyle(color: Colors.white, fontSize: 20)))
-        ..position.x += 10)
-      ..positionType = PositionType.viewport);
+      position: Vector2(150, 200),
+      size: Vector2(150, 110),
+    ));
+
+    _menu();
+
+    _menuFrame.add(_cursorRect = RectangleComponent(
+        position: Vector2(5, 8),
+        size: Vector2(140, 18),
+        paint: Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..color = Colors.yellow));
+  }
+
+  void _menu() {
+    _menuFrame.add(ProtoTextComponent(
+        () => '移動速度UP ${gameInfo.playerInfo.speed}',
+        position: Vector2(10, 10),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(ProtoTextComponent(
+        () => '攻撃範囲UP ${gameInfo.playerInfo.atackRange}',
+        position: Vector2(10, 25),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(ProtoTextComponent(
+        () => '攻撃力UP ${gameInfo.playerInfo.knockBack}',
+        position: Vector2(10, 40),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(TextComponent(
+        text: '魔法威力UP',
+        position: Vector2(10, 55),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(TextComponent(
+        text: '魔法攻撃力UP',
+        position: Vector2(10, 70),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(TextComponent(
+        text: '魔法速度UP',
+        position: Vector2(10, 85),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
   }
 
   @override
@@ -72,11 +136,46 @@ class MenuLayerComponent extends ProtoLayerComponent
     final isKeyUp = event is RawKeyUpEvent;
     if (isKeyUp && event.logicalKey == LogicalKeyboardKey.keyC) {
       _isShow = !_isShow;
-
-      debugPrint('ZZZZZZZZZZZZZ $isShow');
       return false;
     }
+
+    if (!isShow) return super.onKeyEvent(event, keysPressed);
+
+    final isKeyDown = event is RawKeyDownEvent;
+    if (isKeyDown && event.logicalKey == LogicalKeyboardKey.keyW) {
+      _cursor--;
+      if (_cursor < 0) _cursor = 0;
+      _moveCursor();
+    } else if (isKeyDown && event.logicalKey == LogicalKeyboardKey.keyS) {
+      _cursor++;
+      if (_cursor > 5) _cursor = 5;
+      _moveCursor();
+    } else if (isKeyDown && event.logicalKey == LogicalKeyboardKey.space) {
+      _isShow = false;
+      switch (_cursor) {
+        case 0:
+          gameInfo.playerInfo.speed *= 1.1;
+          break;
+        case 1:
+          gameInfo.playerInfo.atackRange *= 1.1;
+          break;
+        case 2:
+          gameInfo.playerInfo.knockBack *= 1.1;
+          break;
+        default:
+          break;
+      }
+    }
     return super.onKeyEvent(event, keysPressed);
+  }
+
+  void _moveCursor() {
+    _cursorRect.add(MoveToEffect(
+        Vector2(5, _cursor * 15 + 8),
+        EffectController(
+          duration: 0.1,
+          infinite: false,
+        )));
   }
 }
 

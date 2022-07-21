@@ -4,6 +4,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:practice_flame/proto/direction.dart';
+import 'package:practice_flame/proto/info.dart';
 
 class ProtoWeapon extends SpriteComponent with HasGameRef {
   ProtoWeapon(this.direction, {this.onComplete});
@@ -17,7 +18,7 @@ class ProtoWeapon extends SpriteComponent with HasGameRef {
     final image = await gameRef.images.load('bat.png');
     sprite = Sprite(image);
     size = Vector2(image.width.toDouble(), image.height.toDouble());
-    size = Vector2.all(1)..multiply(size);
+    size = Vector2.all(gameInfo.playerInfo.atackRange)..multiply(size);
     anchor = Anchor.centerRight;
 
     double fromDeg = 0;
@@ -28,19 +29,19 @@ class ProtoWeapon extends SpriteComponent with HasGameRef {
       case EightDirection.upRight:
         fromDeg = 0;
         toDeg = 180;
-        force = Vector2(0, -20);
+        force = Vector2(0, gameInfo.playerInfo.knockBack * -1);
         position = Vector2(3, 13);
         break;
       case EightDirection.left:
         fromDeg = 90;
         toDeg = -90;
-        force = Vector2(-20, 0);
+        force = Vector2(gameInfo.playerInfo.knockBack * -1, 0);
         position = Vector2(3, 18);
         break;
       case EightDirection.right:
         fromDeg = 90;
         toDeg = 270;
-        force = Vector2(20, 0);
+        force = Vector2(gameInfo.playerInfo.knockBack, 0);
         position = Vector2(15, 18);
         break;
       case EightDirection.down:
@@ -48,7 +49,7 @@ class ProtoWeapon extends SpriteComponent with HasGameRef {
       case EightDirection.downRight:
         fromDeg = 0;
         toDeg = -180;
-        force = Vector2(0, 20);
+        force = Vector2(0, gameInfo.playerInfo.knockBack);
         position = Vector2(3, 25);
         break;
     }

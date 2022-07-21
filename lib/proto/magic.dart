@@ -18,7 +18,7 @@ class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
 
     angle = atan2(target.y - position.y, target.x - position.x);
     force = Vector2(cos(angle) * 70, sin(angle) * 70);
-    targetFar = Vector2(cos(angle) * 1000000, sin(angle) * 1000000);
+    targetFar = Vector2(cos(angle) * 10000, sin(angle) * 10000);
 
     final image = await gameRef.images.load('magic-arrow.png');
     final spriteSheet = SpriteSheet(image: image, srcSize: size);
@@ -35,5 +35,8 @@ class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
   void update(double dt) {
     super.update(dt);
     position.moveToTarget(targetFar, speed * dt);
+    if (targetFar.distanceTo(position).abs() < 1) {
+      removeFromParent();
+    }
   }
 }

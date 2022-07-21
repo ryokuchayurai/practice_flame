@@ -9,6 +9,7 @@ import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'package:practice_flame/proto/gem.dart';
+import 'package:practice_flame/proto/hitbox.dart';
 import 'package:practice_flame/proto/magic.dart';
 import 'package:practice_flame/proto/proto_game.dart';
 import 'package:practice_flame/proto/proto_layer.dart';
@@ -48,9 +49,11 @@ class ProtoMonster extends SpriteAnimationComponent
     final hitboxPaint = BasicPalette.white.paint()
       ..style = PaintingStyle.stroke;
     add(
-      ProtoMonsterHitbox(
+      ProtoHitbox(
+        'monster',
         position: Vector2(0, 0),
         size: size,
+        ignore: ['gem'],
       )
         ..paint = hitboxPaint
         ..renderShape = false,
@@ -121,15 +124,15 @@ class ProtoMonster extends SpriteAnimationComponent
   }
 }
 
-class ProtoMonsterHitbox extends RectangleHitbox {
-  ProtoMonsterHitbox({
-    super.position,
-    super.size,
-    super.angle,
-    super.anchor,
-    super.priority,
-  });
-}
+// class ProtoMonsterHitbox extends RectangleHitbox {
+//   ProtoMonsterHitbox({
+//     super.position,
+//     super.size,
+//     super.angle,
+//     super.anchor,
+//     super.priority,
+//   });
+// }
 
 class ProtoSweep<T extends Hitbox<T>> extends Broadphase<T> {
   ProtoSweep({super.items});
@@ -172,6 +175,9 @@ class ProtoSweep<T extends Hitbox<T>> extends Broadphase<T> {
   }
 
   bool _filter(T a, T b) {
-    return a is ProtoMonsterHitbox && b is ProtoMonsterHitbox;
+    if (a is ProtoHitbox) {
+      return !((a as ProtoHitbox).isTarget(b));
+    }
+    return false;
   }
 }

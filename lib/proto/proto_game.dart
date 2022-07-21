@@ -14,6 +14,7 @@ import 'package:practice_flame/proto/proto_layer.dart';
 class ProtoGame extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
   late final MainLayerComponent _mainLayerComponent;
+  late final TextComponent _debug;
 
   @override
   Future<void> onLoad() async {
@@ -28,6 +29,14 @@ class ProtoGame extends FlameGame
     camera.followComponent(_mainLayerComponent.player,
         worldBounds: const Rect.fromLTRB(0, 0, 16.0 * 50, 16.0 * 50));
     add(FpsTextComponent());
+    add(_debug = TextComponent(position: Vector2(0, 30))
+      ..positionType = PositionType.viewport);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _debug.text = '${_mainLayerComponent.children.length} objects';
   }
 }
 

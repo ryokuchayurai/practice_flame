@@ -9,7 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:practice_flame/proto/character.dart';
 import 'package:practice_flame/proto/direction.dart';
 import 'package:practice_flame/proto/gem.dart';
+import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/magic.dart';
+import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/weapon.dart';
 
 class MainPlayer extends Character
@@ -22,7 +24,6 @@ class MainPlayer extends Character
   late final CharacterHitbox bodyHitboxy;
   late final CharacterHitbox legHitbox;
 
-  double speed = 60;
   int point = 0;
 
   EightDirection _direction = EightDirection.down;
@@ -87,7 +88,7 @@ class MainPlayer extends Character
     if (_keysPressed?.contains(LogicalKeyboardKey.space) ?? false) {
       if (_weapon == null) {
         _weapon = ProtoWeapon(_direction, onComplete: () {
-          Timer(Duration(milliseconds: 500), () {
+          Timer(Duration(milliseconds: gameInfo.playerInfo.attackInterval), () {
             _weapon = null;
           });
         });
@@ -102,7 +103,7 @@ class MainPlayer extends Character
       animation = move[_direction.spriteIndex];
     }
 
-    final deltaPosition = velocity * (speed * dt);
+    final deltaPosition = velocity * (gameInfo.playerInfo.speed * dt);
     position.add(deltaPosition);
   }
 
@@ -118,7 +119,9 @@ class MainPlayer extends Character
     if (own == legHitbox) {
       if (other is ProtoWeapon ||
           other is ProtoMagic ||
-          other is CharacterHitbox) return;
+          other is CharacterHitbox ||
+          other is ProtoGem ||
+          other is ProtoMonster) return;
 
       Vector2 pos = Vector2.copy(position);
       pos.add(legHitbox.position);
@@ -133,22 +136,8 @@ class MainPlayer extends Character
       _showHit(pos);
       _showHit(pointsSum);
 
-      debugPrint('${EightDirectionExtension.fromRadians(a)}');
-
       _collisionMap2[other.hashCode] = CollisionInfo.fromEightDirection(
           EightDirectionExtension.fromRadians(a));
-
-      // position.
-      //
-      // double y1 = position.y + size.y / 2 + 24;
-      // double x1 = position.x + size.x / 2;
-
-      // double y2 = pointsSum.y / intersectionPoints.length;
-      // double x2 = pointsSum.x / intersectionPoints.length;
-      //
-      // double a = atan2(y2 - y1, x2 - x1);
-      // debugPrint(
-      //     '${EightDirectionExtension.fromRadians(a)} ${legHitbox.position}');
 
       _collisionMap[other.hashCode] = <LogicalKeyboardKey>{};
       _keysPressed?.forEach((element) {
@@ -169,7 +158,6 @@ class MainPlayer extends Character
       if (other is ProtoWeapon) return;
       _collisionMap.remove(other.hashCode);
       _collisionMap2.remove(other.hashCode);
-      debugPrint('${_collisionMap2}');
     }
   }
 
