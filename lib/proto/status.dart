@@ -1,3 +1,11 @@
 class GameStatus {
-  int mode = 0;
+  GameMode mode = GameMode.main;
 }
+
+enum GameMode {
+  main,
+  levelUp,
+  gameOver,
+}
+
+final gameStatus = GameStatus();

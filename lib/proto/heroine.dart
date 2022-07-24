@@ -8,11 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:practice_flame/proto/character.dart';
 import 'package:practice_flame/proto/direction.dart';
+import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/magic.dart';
+import 'package:practice_flame/proto/main_player.dart';
 import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/proto_layer.dart';
+import 'package:practice_flame/proto/status.dart';
 
-class Heroine extends Character with ComponentRef {
+class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
   final String _imageFile = 'human3_outline.png';
 
   final idle = <SpriteAnimation>[];
@@ -39,6 +42,8 @@ class Heroine extends Character with ComponentRef {
     cast.add(spriteSheet.createAnimation(
         row: 0, stepTime: 0.1, loop: true, from: 6, to: 7));
 
+    add(CharacterHitbox(size: size));
+
     animation = idle[EightDirection.down.spriteIndex];
   }
 
@@ -49,9 +54,24 @@ class Heroine extends Character with ComponentRef {
     super.update(dt);
 
     final monster =
-        getRef<MainLayerComponent>().getNearMonster(position, range: 500);
+        getRef<MainLayerComponent>().getNearMonster(position, range: 300);
     if (monster != null && _castTimer == null) {
       startCast(monster);
+    }
+
+    final mp = parent?.children.firstWhere((value) => value is MainPlayer)
+        as MainPlayer;
+    if (mp.position.distanceTo(position).abs() < 40) {
+      int needPoint =
+          (gameInfo.heroineInfo.level * gameInfo.heroineInfo.level * 5 / 2)
+              .ceil();
+      if (gameInfo.playerInfo.point >= needPoint) {
+        gameInfo.playerInfo.point -= needPoint;
+        gameInfo.heroineInfo.point += needPoint;
+        gameInfo.heroineInfo.level++;
+
+        gameStatus.mode = GameMode.levelUp;
+      }
     }
   }
 
@@ -77,7 +97,7 @@ class Heroine extends Character with ComponentRef {
           )));
     });
 
-    Timer(Duration(milliseconds: 200), () {
+    Timer(Duration(milliseconds: gameInfo.heroineInfo.castTime), () {
       _castTimer?.cancel();
       animation = cast[1];
 
@@ -86,10 +106,25 @@ class Heroine extends Character with ComponentRef {
       getRef<MainLayerComponent>()
           .add(ProtoMagic(position: from, target: monster.position));
 
-      Timer(Duration(milliseconds: 100), () {
+      Timer(Duration(milliseconds: gameInfo.heroineInfo.castInterval), () {
         animation = idle[EightDirection.down.spriteIndex];
         _castTimer = null;
       });
     });
   }
+
+  @override
+  void onCollisionStart(CharacterHitbox own, Set<Vector2> intersectionPoints,
+      PositionComponent other) {
+    if (other is ProtoMonster && !hasDamage) {
+      gameInfo.heroineInfo.hp--;
+      effectDamage(repeatCount: 10);
+      if (gameInfo.heroineInfo.hp <= 0) {
+        gameStatus.mode = GameMode.gameOver;
+      }
+    }
+  }
+
+  @override
+  void onCollisionEnd(CharacterHitbox own, PositionComponent other) {}
 }

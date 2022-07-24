@@ -44,6 +44,8 @@ class ProtoMonster extends SpriteAnimationComponent
     animation = spriteSheet.createAnimation(
         row: 0, stepTime: 0.2, loop: true, from: 0, to: 5);
 
+    // tint(Colors.blue);
+
     // setOpacity(0.8);
 
     final hitboxPaint = BasicPalette.white.paint()
@@ -75,6 +77,7 @@ class ProtoMonster extends SpriteAnimationComponent
         if (position.distanceTo(target) < 1) {
           _path!.removeFirst();
         }
+        priority = position.y.toInt();
       }
       return;
     }

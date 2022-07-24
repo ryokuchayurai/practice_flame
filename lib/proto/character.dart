@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
@@ -57,6 +58,20 @@ abstract class Character extends SpriteAnimationComponent with HasGameRef {
     }
 
     canvas.restore();
+  }
+
+  bool hasDamage = false;
+
+  void effectDamage({int repeatCount = 10}) {
+    hasDamage = true;
+    add(
+      ColorEffect(
+          Colors.white,
+          const Offset(0, 1),
+          EffectController(
+              duration: 0.1, reverseDuration: 0.1, repeatCount: repeatCount),
+          onComplete: () => hasDamage = false),
+    );
   }
 }
 

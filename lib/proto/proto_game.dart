@@ -10,11 +10,11 @@ import 'package:flutter/rendering.dart';
 import 'package:practice_flame/a_star.dart';
 import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/proto_layer.dart';
+import 'package:practice_flame/proto/proto_text_component.dart';
 
 class ProtoGame extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
   late final MainLayerComponent _mainLayerComponent;
-  late final TextComponent _debug;
 
   @override
   Future<void> onLoad() async {
@@ -25,18 +25,17 @@ class ProtoGame extends FlameGame
 
     add(_mainLayerComponent = MainLayerComponent());
     add(MenuLayerComponent());
+    add(HudLayerComponent());
+    add(GameOverLayerComponent());
 
     camera.followComponent(_mainLayerComponent.player,
         worldBounds: const Rect.fromLTRB(0, 0, 16.0 * 50, 16.0 * 50));
     add(FpsTextComponent());
-    add(_debug = TextComponent(position: Vector2(0, 30))
+    add(ProtoTextComponent(
+        () => '${_mainLayerComponent.children.length} components',
+        position: Vector2(0, 30),
+        updateInterval: 1.0)
       ..positionType = PositionType.viewport);
-  }
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-    _debug.text = '${_mainLayerComponent.children.length} objects';
   }
 }
 

@@ -12,6 +12,7 @@ import 'package:practice_flame/proto/gem.dart';
 import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/magic.dart';
 import 'package:practice_flame/proto/monster.dart';
+import 'package:practice_flame/proto/status.dart';
 import 'package:practice_flame/proto/weapon.dart';
 
 class MainPlayer extends Character
@@ -23,8 +24,6 @@ class MainPlayer extends Character
 
   late final CharacterHitbox bodyHitboxy;
   late final CharacterHitbox legHitbox;
-
-  int point = 0;
 
   EightDirection _direction = EightDirection.down;
 
@@ -63,6 +62,8 @@ class MainPlayer extends Character
   @override
   void update(double dt) {
     super.update(dt);
+
+    if (gameStatus.mode != GameMode.main) return;
 
     CollisionInfo collisionInfo = _collisionMap2.values.length == 0
         ? CollisionInfo()
@@ -147,7 +148,13 @@ class MainPlayer extends Character
     if (own == bodyHitboxy) {
       if (other is ProtoGem) {
         other.removeFromParent();
-        point++;
+        gameInfo.playerInfo.point++;
+      } else if (other is ProtoMonster && !hasDamage) {
+        gameInfo.playerInfo.hp--;
+        effectDamage(repeatCount: 10);
+        if (gameInfo.playerInfo.hp <= 0) {
+          gameStatus.mode = GameMode.gameOver;
+        }
       }
     }
   }

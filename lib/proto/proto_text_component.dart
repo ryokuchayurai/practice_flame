@@ -13,11 +13,13 @@ class ProtoTextComponent extends TextComponent {
     super.anchor,
     super.children,
     super.priority,
+    this.updateInterval = 0.5,
   }) {
     super.text = textBuilder();
   }
 
   final TextBuilder textBuilder;
+  final double updateInterval;
 
   double _counter = 0;
 
@@ -25,7 +27,7 @@ class ProtoTextComponent extends TextComponent {
   void update(double dt) {
     super.update(dt);
     _counter += dt;
-    if (_counter > 0.5) {
+    if (_counter > updateInterval) {
       text = textBuilder();
       _counter = 0;
     }

@@ -17,6 +17,7 @@ import 'package:practice_flame/proto/main_player.dart';
 import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/proto_game.dart';
 import 'package:practice_flame/proto/proto_text_component.dart';
+import 'package:practice_flame/proto/status.dart';
 import 'package:tiled/tiled.dart';
 
 abstract class ProtoLayerComponent extends Component {
@@ -45,10 +46,8 @@ mixin ComponentRef on Component {
 
 class MenuLayerComponent extends ProtoLayerComponent
     with HasGameRef<ProtoGame>, KeyboardHandler {
-  bool _isShow = true;
-
   @override
-  bool get isShow => _isShow;
+  bool get isShow => gameStatus.mode == GameMode.levelUp;
 
   late final NineTileBoxComponent _menuFrame;
   late final RectangleComponent _cursorRect;
@@ -82,7 +81,7 @@ class MenuLayerComponent extends ProtoLayerComponent
 
   void _menu() {
     _menuFrame.add(ProtoTextComponent(
-        () => '移動速度UP ${gameInfo.playerInfo.speed}',
+        () => '移動速度UP ${gameInfo.playerInfo.speed.toInt()}',
         position: Vector2(10, 10),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -90,7 +89,7 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(ProtoTextComponent(
-        () => '攻撃範囲UP ${gameInfo.playerInfo.atackRange}',
+        () => '攻撃範囲UP ${gameInfo.playerInfo.atackRange.toInt()}',
         position: Vector2(10, 25),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -98,15 +97,15 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(ProtoTextComponent(
-        () => '攻撃力UP ${gameInfo.playerInfo.knockBack}',
+        () => '攻撃力UP ${gameInfo.playerInfo.knockBack.toInt()}',
         position: Vector2(10, 40),
         textRenderer: TextPaint(
             style: TextStyle(
                 fontSize: 10,
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
-    _menuFrame.add(TextComponent(
-        text: '魔法威力UP',
+    _menuFrame.add(ProtoTextComponent(
+        () => '魔法速度UP ${gameInfo.heroineInfo.castTime}',
         position: Vector2(10, 55),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -114,7 +113,7 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(TextComponent(
-        text: '魔法攻撃力UP',
+        text: '',
         position: Vector2(10, 70),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -122,7 +121,7 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(TextComponent(
-        text: '魔法速度UP',
+        text: '',
         position: Vector2(10, 85),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -133,12 +132,6 @@ class MenuLayerComponent extends ProtoLayerComponent
 
   @override
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    final isKeyUp = event is RawKeyUpEvent;
-    if (isKeyUp && event.logicalKey == LogicalKeyboardKey.keyC) {
-      _isShow = !_isShow;
-      return false;
-    }
-
     if (!isShow) return super.onKeyEvent(event, keysPressed);
 
     final isKeyDown = event is RawKeyDownEvent;
@@ -151,7 +144,6 @@ class MenuLayerComponent extends ProtoLayerComponent
       if (_cursor > 5) _cursor = 5;
       _moveCursor();
     } else if (isKeyDown && event.logicalKey == LogicalKeyboardKey.space) {
-      _isShow = false;
       switch (_cursor) {
         case 0:
           gameInfo.playerInfo.speed *= 1.1;
@@ -162,9 +154,16 @@ class MenuLayerComponent extends ProtoLayerComponent
         case 2:
           gameInfo.playerInfo.knockBack *= 1.1;
           break;
+        case 3:
+          gameInfo.heroineInfo.castTime =
+              (gameInfo.heroineInfo.castTime * 0.95).toInt();
+          gameInfo.heroineInfo.castInterval =
+              (gameInfo.heroineInfo.castInterval * 0.95).toInt();
+          break;
         default:
           break;
       }
+      gameStatus.mode = GameMode.main;
     }
     return super.onKeyEvent(event, keysPressed);
   }
@@ -176,6 +175,59 @@ class MenuLayerComponent extends ProtoLayerComponent
           duration: 0.1,
           infinite: false,
         )));
+  }
+}
+
+class HudLayerComponent extends ProtoLayerComponent {
+  @override
+  bool get isShow => true;
+
+  @override
+  Future<void> onLoad() async {
+    priority = 100000;
+    positionType = PositionType.viewport;
+
+    add(ProtoTextComponent(
+        () =>
+            'Lvl ${gameInfo.heroineInfo.level}  ${gameInfo.playerInfo.point}/${(gameInfo.heroineInfo.level * gameInfo.heroineInfo.level * 5 / 2).ceil()}p',
+        position: Vector2(200, 10),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    add(ProtoTextComponent(() => 'HP ${gameInfo.playerInfo.hp}',
+        position: Vector2(200, 25),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    add(ProtoTextComponent(() => 'HP ${gameInfo.heroineInfo.hp}',
+        position: Vector2(200, 40),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+  }
+}
+
+class GameOverLayerComponent extends ProtoLayerComponent {
+  @override
+  bool get isShow => gameStatus.mode == GameMode.gameOver;
+
+  @override
+  Future<void> onLoad() async {
+    priority = 200001;
+    positionType = PositionType.viewport;
+
+    add(RectangleComponent(
+        position: Vector2.zero(),
+        size: Vector2(400, 320),
+        paint: Paint()..color = Colors.red.withOpacity(0.6)));
+
+    add(TextComponent(text: 'GAME OVER', position: Vector2(100, 150)));
   }
 }
 
@@ -191,20 +243,15 @@ class MainLayerComponent extends ProtoLayerComponent {
   Future<void> onLoad() async {
     _loadMap();
 
+    gameInfo.reset();
+
     add(player);
     player.position = Vector2(560, 496);
 
     add(Heroine()..position = Vector2(592, 496));
 
-    // add(RectangleComponent(
-    //     position: Vector2.zero(),
-    //     size: Vector2(400, 320),
-    //     priority: 20000,
-    //     paint: Paint()..color = Colors.black.withOpacity(0.4))
-    //   ..positionType = PositionType.viewport);
-
     Timer.periodic(const Duration(seconds: 3), (timer) {
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < (gameInfo.heroineInfo.level / 3).ceil(); i++) {
         _addMonster();
       }
     });

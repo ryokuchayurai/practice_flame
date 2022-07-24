@@ -27,7 +27,7 @@ class ProtoGem extends SpriteAnimationComponent
         ignore: ['monster'],
       )
         ..paint = hitboxPaint
-        ..renderShape = true,
+        ..renderShape = false,
     );
   }
 }
