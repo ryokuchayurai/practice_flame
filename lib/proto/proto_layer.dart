@@ -52,7 +52,8 @@ class MenuLayerComponent extends ProtoLayerComponent
   late final NineTileBoxComponent _menuFrame;
   late final RectangleComponent _cursorRect;
 
-  int _cursor = 0;
+  int _cursorX = 0;
+  int _cursorY = 0;
 
   @override
   Future<void> onLoad() async {
@@ -64,15 +65,15 @@ class MenuLayerComponent extends ProtoLayerComponent
 
     add(_menuFrame = NineTileBoxComponent(
       nineTileBox: nineTileBox,
-      position: Vector2(150, 200),
-      size: Vector2(150, 110),
+      position: Vector2(120, 200),
+      size: Vector2(190, 110),
     ));
 
     _menu();
 
     _menuFrame.add(_cursorRect = RectangleComponent(
         position: Vector2(5, 8),
-        size: Vector2(140, 18),
+        size: Vector2(90, 18),
         paint: Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
@@ -89,7 +90,7 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(ProtoTextComponent(
-        () => '攻撃範囲UP ${gameInfo.playerInfo.atackRange.toInt()}',
+        () => '攻撃範囲UP ${gameInfo.playerInfo.attackRange.toInt()}',
         position: Vector2(10, 25),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -97,7 +98,7 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(ProtoTextComponent(
-        () => '攻撃力UP ${gameInfo.playerInfo.knockBack.toInt()}',
+        () => '攻撃力UP ${gameInfo.playerInfo.attackPower.toInt()}',
         position: Vector2(10, 40),
         textRenderer: TextPaint(
             style: TextStyle(
@@ -105,24 +106,49 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(ProtoTextComponent(
-        () => '魔法速度UP ${gameInfo.heroineInfo.castTime}',
+        () => '攻撃速度UP ${gameInfo.playerInfo.attackInterval}',
         position: Vector2(10, 55),
         textRenderer: TextPaint(
             style: TextStyle(
                 fontSize: 10,
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
-    _menuFrame.add(TextComponent(
-        text: '',
-        position: Vector2(10, 70),
+
+    _menuFrame.add(ProtoTextComponent(
+        () => '矢の魔法UP ${gameInfo.heroineInfo.magicArrow}',
+        position: Vector2(100, 10),
         textRenderer: TextPaint(
             style: TextStyle(
                 fontSize: 10,
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(TextComponent(
-        text: '',
-        position: Vector2(10, 85),
+        text: '炎の魔法UP ${gameInfo.heroineInfo.magicCircle}',
+        position: Vector2(100, 25),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(TextComponent(
+        text: '麻痺の魔法UP ${gameInfo.heroineInfo.magicLock}',
+        position: Vector2(100, 40),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(TextComponent(
+        text: '雷の魔法UP ${gameInfo.heroineInfo.magicLaser}',
+        position: Vector2(100, 55),
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 10,
+                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                color: Colors.white))));
+    _menuFrame.add(TextComponent(
+        text: '魔法速度UP ${gameInfo.heroineInfo.castTime}',
+        position: Vector2(100, 70),
         textRenderer: TextPaint(
             style: TextStyle(
                 fontSize: 10,
@@ -135,42 +161,66 @@ class MenuLayerComponent extends ProtoLayerComponent
     if (!isShow) return super.onKeyEvent(event, keysPressed);
 
     final isKeyDown = event is RawKeyDownEvent;
-    if (isKeyDown && event.logicalKey == LogicalKeyboardKey.keyW) {
-      _cursor--;
-      if (_cursor < 0) _cursor = 0;
-      _moveCursor();
-    } else if (isKeyDown && event.logicalKey == LogicalKeyboardKey.keyS) {
-      _cursor++;
-      if (_cursor > 5) _cursor = 5;
-      _moveCursor();
-    } else if (isKeyDown && event.logicalKey == LogicalKeyboardKey.space) {
-      switch (_cursor) {
-        case 0:
-          gameInfo.playerInfo.speed *= 1.1;
-          break;
-        case 1:
-          gameInfo.playerInfo.atackRange *= 1.1;
-          break;
-        case 2:
-          gameInfo.playerInfo.knockBack *= 1.1;
-          break;
-        case 3:
-          gameInfo.heroineInfo.castTime =
-              (gameInfo.heroineInfo.castTime * 0.95).toInt();
-          gameInfo.heroineInfo.castInterval =
-              (gameInfo.heroineInfo.castInterval * 0.95).toInt();
-          break;
-        default:
-          break;
+    if (isKeyDown) {
+      if (event.logicalKey == LogicalKeyboardKey.keyW) {
+        _cursorY--;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
+        _cursorY++;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyA) {
+        _cursorX--;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
+        _cursorX++;
       }
-      gameStatus.mode = GameMode.main;
+
+      if (_cursorX < 0) {
+        _cursorX = 0;
+      } else if (_cursorX > 1) {
+        _cursorX = 1;
+      }
+
+      if (_cursorY < 0) {
+        _cursorY = 0;
+      } else if (_cursorX == 0 && _cursorY > 3) {
+        _cursorY = 3;
+      } else if (_cursorX == 1 && _cursorY > 4) {
+        _cursorY = 4;
+      }
+
+      _moveCursor();
+
+      if (event.logicalKey == LogicalKeyboardKey.space) {
+        gameStatus.mode = GameMode.main;
+      }
     }
+
+    // if (isKeyDown && event.logicalKey == LogicalKeyboardKey.space) {
+    //   switch (_cursor) {
+    //     case 0:
+    //       gameInfo.playerInfo.speed *= 1.1;
+    //       break;
+    //     case 1:
+    //       gameInfo.playerInfo.attackRange *= 1.1;
+    //       break;
+    //     case 2:
+    //       gameInfo.playerInfo.knockBack *= 1.1;
+    //       break;
+    //     case 3:
+    //       gameInfo.heroineInfo.castTime =
+    //           (gameInfo.heroineInfo.castTime * 0.95).toInt();
+    //       gameInfo.heroineInfo.castInterval =
+    //           (gameInfo.heroineInfo.castInterval * 0.95).toInt();
+    //       break;
+    //     default:
+    //       break;
+    //   }
+    //   gameStatus.mode = GameMode.main;
+    // }
     return super.onKeyEvent(event, keysPressed);
   }
 
   void _moveCursor() {
     _cursorRect.add(MoveToEffect(
-        Vector2(5, _cursor * 15 + 8),
+        Vector2(_cursorX * 90 + 5, _cursorY * 15 + 8),
         EffectController(
           duration: 0.1,
           infinite: false,
@@ -213,7 +263,8 @@ class HudLayerComponent extends ProtoLayerComponent {
   }
 }
 
-class GameOverLayerComponent extends ProtoLayerComponent {
+class GameOverLayerComponent extends ProtoLayerComponent
+    with HasGameRef<ProtoGame>, KeyboardHandler {
   @override
   bool get isShow => gameStatus.mode == GameMode.gameOver;
 
@@ -228,6 +279,19 @@ class GameOverLayerComponent extends ProtoLayerComponent {
         paint: Paint()..color = Colors.red.withOpacity(0.6)));
 
     add(TextComponent(text: 'GAME OVER', position: Vector2(100, 150)));
+  }
+
+  @override
+  bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    if (!isShow) return super.onKeyEvent(event, keysPressed);
+
+    final isKeyDown = event is RawKeyDownEvent;
+    if (isKeyDown && event.logicalKey == LogicalKeyboardKey.keyC) {
+      gameRef.reset();
+      return false;
+    }
+
+    return super.onKeyEvent(event, keysPressed);
   }
 }
 

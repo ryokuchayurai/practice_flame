@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
+import 'package:flutter/material.dart';
+import 'package:practice_flame/proto/proto_game.dart';
 
 class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
   ProtoMagic({super.position, required this.target});
@@ -17,8 +19,14 @@ class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
     size = Vector2(10, 5);
 
     angle = atan2(target.y - position.y, target.x - position.x);
+    double deg = angle * radians2Degrees + (Random().nextDouble() * 60 - 30);
+    angle = deg * degrees2Radians;
+
     force = Vector2(cos(angle) * 70, sin(angle) * 70);
-    targetFar = Vector2(cos(angle) * 10000, sin(angle) * 10000);
+    targetFar = Vector2(cos(angle) * 200, sin(angle) * 200)..add(position);
+
+    debugPrint('magic -> $targetFar');
+    (gameRef as ProtoGame).showPoint(targetFar);
 
     final image = await gameRef.images.load('magic-arrow.png');
     final spriteSheet = SpriteSheet(image: image, srcSize: size);

@@ -12,6 +12,7 @@ import 'package:practice_flame/proto/gem.dart';
 import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/magic.dart';
 import 'package:practice_flame/proto/monster.dart';
+import 'package:practice_flame/proto/proto_game.dart';
 import 'package:practice_flame/proto/status.dart';
 import 'package:practice_flame/proto/weapon.dart';
 
@@ -134,8 +135,8 @@ class MainPlayer extends Character
 
       double a = atan2(pointsSum.y - pos.y, pointsSum.x - pos.x);
 
-      _showHit(pos);
-      _showHit(pointsSum);
+      (gameRef as ProtoGame).showPoint(pos);
+      (gameRef as ProtoGame).showPoint(pointsSum);
 
       _collisionMap2[other.hashCode] = CollisionInfo.fromEightDirection(
           EightDirectionExtension.fromRadians(a));
@@ -166,25 +167,6 @@ class MainPlayer extends Character
       _collisionMap.remove(other.hashCode);
       _collisionMap2.remove(other.hashCode);
     }
-  }
-
-  void _showHit(Vector2 pos) {
-    gameRef.add(
-      ParticleSystemComponent(
-        priority: 1000,
-        position: pos,
-        particle: Particle.generate(
-          count: 1,
-          lifespan: 3,
-          generator: (i) {
-            return CircleParticle(
-              radius: 1,
-              paint: Paint()..color = Colors.white,
-            );
-          },
-        ),
-      ),
-    );
   }
 }
 

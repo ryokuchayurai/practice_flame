@@ -18,7 +18,7 @@ class ProtoWeapon extends SpriteComponent with HasGameRef {
     final image = await gameRef.images.load('bat.png');
     sprite = Sprite(image);
     size = Vector2(image.width.toDouble(), image.height.toDouble());
-    size = Vector2.all(gameInfo.playerInfo.atackRange)..multiply(size);
+    size = Vector2.all(gameInfo.playerInfo.attackRange)..multiply(size);
     anchor = Anchor.centerRight;
 
     double fromDeg = 0;
