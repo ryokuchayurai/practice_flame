@@ -2,8 +2,10 @@ import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
+import 'package:practice_flame/proto/hitbox.dart';
 import 'package:practice_flame/proto/proto_game.dart';
 
 class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
@@ -46,5 +48,36 @@ class ProtoMagic extends SpriteAnimationComponent with HasGameRef {
     if (targetFar.distanceTo(position).abs() < 1) {
       removeFromParent();
     }
+  }
+}
+
+class FireMagic extends SpriteAnimationComponent with HasGameRef {
+  FireMagic({this.onComplete});
+
+  final void Function(FireMagic)? onComplete;
+
+  @override
+  Future<void> onLoad() async {
+    size = Vector2(13, 16);
+
+    final image = await gameRef.images.load('magic-fire.png');
+    final spriteSheet = SpriteSheet(image: image, srcSize: size);
+    animation = spriteSheet.createAnimation(row: 0, stepTime: 0.1);
+
+    add(ProtoHitbox('fire',
+        position: Vector2(0, 0), size: size, ignore: ['leg', 'body']));
+
+    final path2 = Path()..addOval(const Rect.fromLTRB(-50, -50, 50, 50));
+    add(MoveAlongPathEffect(
+        path2,
+        EffectController(
+          duration: 15,
+          // startDelay: i * 0.3,
+          // infinite: true,
+        ),
+        oriented: false, onComplete: () {
+      onComplete?.call(this);
+      removeFromParent();
+    }));
   }
 }

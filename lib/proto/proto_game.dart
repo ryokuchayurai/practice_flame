@@ -40,12 +40,14 @@ class ProtoGame extends FlameGame
   }
 
   void _addDebugInfo() {
-    add(FpsTextComponent());
+    add(FpsTextComponent<TextPaint>(
+        textRenderer: TextPaint(style: const TextStyle(fontSize: 8))));
 
     add(ProtoTextComponent(
         () => '${_mainLayerComponent.children.length} components',
-        position: Vector2(0, 30),
-        updateInterval: 1.0)
+        position: Vector2(0, 8),
+        updateInterval: 1.0,
+        textRenderer: TextPaint(style: const TextStyle(fontSize: 8)))
       ..priority = double.maxFinite.toInt()
       ..positionType = PositionType.viewport);
   }

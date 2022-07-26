@@ -7,6 +7,7 @@ import 'package:flame/extensions.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
+import 'package:practice_flame/proto/hitbox.dart';
 
 abstract class Character extends SpriteAnimationComponent with HasGameRef {
   List<SpriteAnimation> create4DirectionAnimation(
@@ -82,13 +83,16 @@ mixin CharacterCollisionCallbacks on Component {
 }
 
 class CharacterHitbox extends PositionComponent with CollisionCallbacks {
-  CharacterHitbox({
+  CharacterHitbox(
+    this.tag, {
     super.position,
     super.size,
     super.angle,
     super.anchor,
     super.priority,
   });
+
+  final String tag;
 
   @override
   Future<void>? onLoad() {
@@ -97,7 +101,7 @@ class CharacterHitbox extends PositionComponent with CollisionCallbacks {
     final hitboxPaint = BasicPalette.white.paint()
       ..style = PaintingStyle.stroke;
 
-    add(RectangleHitbox(
+    add(ProtoHitbox(tag,
         position: Vector2.zero(),
         size: size,
         angle: angle,

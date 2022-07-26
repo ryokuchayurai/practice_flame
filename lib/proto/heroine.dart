@@ -24,6 +24,8 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
 
   final cast = <SpriteAnimation>[];
 
+  final _fires = <FireMagic>[];
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
@@ -42,7 +44,7 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
     cast.add(spriteSheet.createAnimation(
         row: 0, stepTime: 0.1, loop: true, from: 6, to: 7));
 
-    add(CharacterHitbox(size: size));
+    add(CharacterHitbox('heroine_body', size: size));
 
     animation = idle[EightDirection.down.spriteIndex];
   }
@@ -105,6 +107,11 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
 
       getRef<MainLayerComponent>()
           .add(ProtoMagic(position: from, target: monster.position));
+
+      if (_fires.length < 1) {
+        _fires.add(FireMagic(onComplete: (fire) => _fires.remove(fire))..position = position);
+        getRef<MainLayerComponent>().add(_fires.last);
+      }
 
       Timer(Duration(milliseconds: gameInfo.heroineInfo.castInterval), () {
         animation = idle[EightDirection.down.spriteIndex];

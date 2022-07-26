@@ -109,6 +109,12 @@ class ProtoMonster extends SpriteAnimationComponent
               .add(ProtoGem()..position = this.position);
         }
       });
+    } else if (other is FireMagic) {
+      _damageEffect(Vector2(0, 0), onComplete: () {
+        getRef<MainLayerComponent>().removeMonster(this);
+        removeFromParent();
+        // getRef<MainLayerComponent>().add(ProtoGem()..position = this.position);
+      });
     }
   }
 

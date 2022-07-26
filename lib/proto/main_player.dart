@@ -52,9 +52,10 @@ class MainPlayer extends Character
 
     animation = idle[EightDirection.down.spriteIndex];
 
-    add(bodyHitboxy = CharacterHitbox(size: size));
+    add(bodyHitboxy = CharacterHitbox('body', size: size));
 
     add(legHitbox = CharacterHitbox(
+      'leg',
       position: Vector2(0, 24),
       size: Vector2(16, 8),
     ));
@@ -123,7 +124,8 @@ class MainPlayer extends Character
           other is ProtoMagic ||
           other is CharacterHitbox ||
           other is ProtoGem ||
-          other is ProtoMonster) return;
+          other is ProtoMonster ||
+          other is FireMagic) return;
 
       Vector2 pos = Vector2.copy(position);
       pos.add(legHitbox.position);

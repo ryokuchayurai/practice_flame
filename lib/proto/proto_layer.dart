@@ -131,7 +131,7 @@ class MenuLayerComponent extends ProtoLayerComponent
                 fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
                 color: Colors.white))));
     _menuFrame.add(TextComponent(
-        text: '麻痺の魔法UP ${gameInfo.heroineInfo.magicLock}',
+        text: '氷の魔法UP ${gameInfo.heroineInfo.magicLock}',
         position: Vector2(100, 40),
         textRenderer: TextPaint(
             style: TextStyle(
