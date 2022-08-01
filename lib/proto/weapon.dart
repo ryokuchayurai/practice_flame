@@ -5,13 +5,16 @@ import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:practice_flame/proto/direction.dart';
 import 'package:practice_flame/proto/info.dart';
+import 'package:practice_flame/proto/magic.dart';
 
-class ProtoWeapon extends SpriteComponent with HasGameRef {
-  ProtoWeapon(this.direction, {this.onComplete});
+class ProtoWeapon extends SpriteComponent with HasGameRef, AttackDamage {
+  ProtoWeapon(this.direction, {this.onComplete}) {
+    damagePoint = 10;
+    damageColor = Colors.white;
+  }
 
   final EightDirection direction;
   final void Function()? onComplete;
-  late final Vector2 force;
 
   @override
   Future<void> onLoad() async {

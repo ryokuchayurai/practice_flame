@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:flame/collisions.dart';
@@ -10,10 +9,10 @@ import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:practice_flame/a_star.dart';
 import 'package:practice_flame/proto/heroine.dart';
 import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/main_player.dart';
+import 'package:practice_flame/proto/map_service.dart';
 import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/proto_game.dart';
 import 'package:practice_flame/proto/proto_text_component.dart';
@@ -300,8 +299,9 @@ class MainLayerComponent extends ProtoLayerComponent {
   bool get isShow => true;
 
   final MainPlayer player = MainPlayer();
+  final Heroine heroine = Heroine();
 
-  List<ProtoMonster> _monsters = [];
+  List<Enemy> _monsters = [];
 
   @override
   Future<void> onLoad() async {
@@ -312,7 +312,8 @@ class MainLayerComponent extends ProtoLayerComponent {
     add(player);
     player.position = Vector2(560, 496);
 
-    add(Heroine()..position = Vector2(592, 496));
+    add(heroine);
+    heroine.position = Vector2(592, 496);
 
     Timer.periodic(const Duration(seconds: 3), (timer) {
       for (int i = 0; i < (gameInfo.heroineInfo.level / 3).ceil(); i++) {
@@ -333,7 +334,7 @@ class MainLayerComponent extends ProtoLayerComponent {
 
     final blockLayer = tiledMap.tileMap.getLayer<TileLayer>('block');
     PositionComponent blocks = PositionComponent();
-    _getCollisionRect(blockLayer!).forEach((element) {
+    MapService().getCollisionRect(blockLayer!).forEach((element) {
       blocks.add(RectangleHitbox(
           position: Vector2(element.left, element.top),
           size: Vector2(element.width, element.height))
@@ -350,102 +351,7 @@ class MainLayerComponent extends ProtoLayerComponent {
     tiledMapPassable.priority = 10000;
     add(tiledMapPassable);
 
-    _initAStar(blockLayer);
-  }
-
-  List<Rect> _getCollisionRect(TileLayer blockLayer) {
-    final result = <Rect?>[];
-    for (int x = 0; x < blockLayer.width; x++) {
-      Vector2? from;
-      Vector2 to = Vector2(16, 0);
-      for (int y = 0; y < blockLayer.height; y++) {
-        if (from != null) to.y += 16.0;
-        if (blockLayer.tileData![y][x].tile == 0) {
-          if (from != null) {
-            result.add(Rect.fromLTWH(from.x, from.y, to.x, to.y));
-            from = null;
-            to.y = 0;
-          }
-          continue;
-        }
-
-        from = from ?? Vector2(x * 16.0, y * 16.0);
-      }
-
-      if (from != null) {
-        result.add(Rect.fromLTWH(from.x, from.y, to.x, to.y));
-      }
-    }
-    result.sort((a, b) {
-      if (a == null && b == null) return 0;
-      if (a == null) return -1;
-      if (b == null) return 1;
-
-      if (a.top != b.top) return (a.top - b.top).toInt();
-      return (a.left - b.left).toInt();
-    });
-
-    for (int i = 1; i < result.length; i++) {
-      final a = result[i - 1];
-      final b = result[i];
-
-      if (a!.top == b!.top && a!.height == b!.height && a!.right == b!.left) {
-        result[i - 1] = null;
-        result[i] = Rect.fromLTWH(a.left, a.top, a.width + b.width, a.height);
-      }
-    }
-
-    return result.where((element) => element != null).map((e) => e!).toList();
-  }
-
-  late final List<List<MapNode?>?> mapNodes;
-  late final AStar<MapNode> aStar;
-
-  void _initAStar(TileLayer blockLayer) {
-    List<MapNode> allNodes = [];
-    mapNodes = []..length = blockLayer.height;
-    for (int y = 0; y < blockLayer.height; y++) {
-      mapNodes[y] = []..length = blockLayer.width;
-      final row = blockLayer.tileData![y];
-      for (int x = 0; x < blockLayer.width; x++) {
-        final grid = row[x];
-        if (grid.tile != 0) continue;
-        final node = MapNode(Vector2(x * 16, y * 16));
-        allNodes.add(node);
-        mapNodes[y]![x] = node;
-      }
-    }
-
-    for (int y = 0; y < blockLayer.height; y++) {
-      for (int x = 0; x < blockLayer.width; x++) {
-        final node = mapNodes[y]![x];
-        if (node == null) {
-          continue;
-        }
-
-        for (var i = y - 1; i <= y + 1; i++) {
-          if (i < 0 || i >= blockLayer.height) {
-            continue; // Outside Maze bounds.
-          }
-          for (var j = x - 1; j <= x + 1; j++) {
-            if (j < 0 || j >= blockLayer.width) {
-              continue; // Outside Maze bounds.
-            }
-            if (i == y && j == x) {
-              continue; // Same tile.
-            }
-            if (i != y && j != x) {
-              // continue; // naname nashi!
-            }
-            if (mapNodes[i]![j] == null) continue;
-            node.connectedNodes.add(mapNodes[i]![j]!);
-          }
-        }
-      }
-    }
-
-    final tileGraph = MapGraph()..allNodes = allNodes;
-    aStar = AStar(tileGraph);
+    MapService().initAStar(blockLayer);
   }
 
   void _addMonster() {
@@ -453,17 +359,19 @@ class MainLayerComponent extends ProtoLayerComponent {
     if (rnd.nextBool()) {
       int x = rnd.nextBool() ? 0 : 49;
       int y = rnd.nextInt(49);
-      _monsters.add(ProtoMonster(position: Vector2(x * 16.0, y * 16.0)));
+      _monsters.add(
+          BigMonster(target: heroine, position: Vector2(x * 16.0, y * 16.0)));
       add(_monsters.last);
     } else {
       int x = rnd.nextInt(49);
       int y = rnd.nextBool() ? 0 : 49;
-      _monsters.add(ProtoMonster(position: Vector2(x * 16.0, y * 16.0)));
+      _monsters.add(
+          SmallMonster(target: heroine, position: Vector2(x * 16.0, y * 16.0)));
       add(_monsters.last);
     }
   }
 
-  ProtoMonster? getNearMonster(Vector2 pos, {double? range}) {
+  Enemy? getNearEnemy(Vector2 pos, {double? range}) {
     final sorted = _monsters
         .where((element) =>
             range == null || element.position.distanceTo(pos).abs() < range!)
@@ -475,17 +383,7 @@ class MainLayerComponent extends ProtoLayerComponent {
     return sorted.first;
   }
 
-  void removeMonster(ProtoMonster monster) {
-    _monsters.remove(monster);
-  }
-
-  Future<Queue<MapNode>> getPath(Vector2 from, Vector2 to) {
-    final fromIndex = from.clone()..divide(Vector2(16, 16));
-    final toIndex = to.clone()..divide(Vector2(16, 16));
-
-    return aStar.findPath(
-      mapNodes[fromIndex.y.toInt()]![fromIndex.x.toInt()]!,
-      mapNodes[toIndex.y.toInt()]![toIndex.x.toInt()]!,
-    );
+  void removeMonster(Enemy enemy) {
+    _monsters.remove(enemy);
   }
 }

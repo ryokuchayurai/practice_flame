@@ -11,16 +11,33 @@ import 'package:practice_flame/proto/hitbox.dart';
 
 abstract class Character extends SpriteAnimationComponent with HasGameRef {
   List<SpriteAnimation> create4DirectionAnimation(
-      SpriteSheet sheet, double stepTime, int from, int to) {
+      SpriteSheet sheet, double stepTime, int from, int to,
+      {int rowStart = 0}) {
     return [
       sheet.createAnimation(
-          row: 0, stepTime: stepTime, loop: true, from: from, to: to),
+          row: 0 + rowStart,
+          stepTime: stepTime,
+          loop: true,
+          from: from,
+          to: to),
       sheet.createAnimation(
-          row: 1, stepTime: stepTime, loop: true, from: from, to: to),
+          row: 1 + rowStart,
+          stepTime: stepTime,
+          loop: true,
+          from: from,
+          to: to),
       sheet.createAnimation(
-          row: 2, stepTime: stepTime, loop: true, from: from, to: to),
+          row: 2 + rowStart,
+          stepTime: stepTime,
+          loop: true,
+          from: from,
+          to: to),
       sheet.createAnimation(
-          row: 3, stepTime: stepTime, loop: true, from: from, to: to),
+          row: 3 + rowStart,
+          stepTime: stepTime,
+          loop: true,
+          from: from,
+          to: to),
     ];
   }
 

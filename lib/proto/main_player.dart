@@ -9,19 +9,24 @@ import 'package:flutter/services.dart';
 import 'package:practice_flame/proto/character.dart';
 import 'package:practice_flame/proto/direction.dart';
 import 'package:practice_flame/proto/gem.dart';
+import 'package:practice_flame/proto/heroine.dart';
 import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/magic.dart';
 import 'package:practice_flame/proto/monster.dart';
 import 'package:practice_flame/proto/proto_game.dart';
+import 'package:practice_flame/proto/proto_layer.dart';
 import 'package:practice_flame/proto/status.dart';
 import 'package:practice_flame/proto/weapon.dart';
 
 class MainPlayer extends Character
-    with KeyboardHandler, CharacterCollisionCallbacks {
+    with KeyboardHandler, CharacterCollisionCallbacks, ComponentRef {
   final String _imageFile = 'human2_outline.png';
 
   late final idle = <SpriteAnimation>[];
   late final move = <SpriteAnimation>[];
+
+  final idleFollow = <SpriteAnimation>[];
+  final moveFollow = <SpriteAnimation>[];
 
   late final CharacterHitbox bodyHitboxy;
   late final CharacterHitbox legHitbox;
@@ -50,6 +55,11 @@ class MainPlayer extends Character
     idle.addAll(create4DirectionAnimation(spriteSheet, 0.2, 0, 1));
     move.addAll(create4DirectionAnimation(spriteSheet, 0.2, 1, 5));
 
+    idleFollow
+        .addAll(create4DirectionAnimation(spriteSheet, 0.2, 0, 1, rowStart: 4));
+    moveFollow
+        .addAll(create4DirectionAnimation(spriteSheet, 0.2, 1, 5, rowStart: 4));
+
     animation = idle[EightDirection.down.spriteIndex];
 
     add(bodyHitboxy = CharacterHitbox('body', size: size));
@@ -77,13 +87,21 @@ class MainPlayer extends Character
       final collision =
           _collisionMap.values.where((e) => e.contains(element)).isNotEmpty;
 
-      if (element == LogicalKeyboardKey.keyW && !collisionInfo.up) {
+      if ((element == LogicalKeyboardKey.keyW ||
+              element == LogicalKeyboardKey.arrowUp) &&
+          !collisionInfo.up) {
         velocity.y += -1;
-      } else if (element == LogicalKeyboardKey.keyA && !collisionInfo.left) {
+      } else if ((element == LogicalKeyboardKey.keyA ||
+              element == LogicalKeyboardKey.arrowLeft) &&
+          !collisionInfo.left) {
         velocity.x += -1;
-      } else if (element == LogicalKeyboardKey.keyS && !collisionInfo.down) {
+      } else if ((element == LogicalKeyboardKey.keyS ||
+              element == LogicalKeyboardKey.arrowDown) &&
+          !collisionInfo.down) {
         velocity.y += 1;
-      } else if (element == LogicalKeyboardKey.keyD && !collisionInfo.right) {
+      } else if ((element == LogicalKeyboardKey.keyD ||
+              element == LogicalKeyboardKey.arrowRight) &&
+          !collisionInfo.right) {
         velocity.x += 1;
       }
     });
@@ -106,6 +124,21 @@ class MainPlayer extends Character
       animation = move[_direction.spriteIndex];
     }
 
+    final heroine =
+        parent?.children.firstWhere((value) => value is Heroine) as Heroine;
+    if (_keysPressed?.contains(LogicalKeyboardKey.keyC) ?? false) {
+      if (heroine.position.distanceTo(position).abs() < 40) {
+        if (velocity.isZero()) {
+          animation = idleFollow[_direction.spriteIndex];
+        } else {
+          animation = moveFollow[_direction.spriteIndex];
+        }
+        heroine.follow(_direction, position, velocity.isZero());
+      }
+    } else {
+      heroine.unfollow();
+    }
+
     final deltaPosition = velocity * (gameInfo.playerInfo.speed * dt);
     position.add(deltaPosition);
   }
@@ -121,11 +154,12 @@ class MainPlayer extends Character
       PositionComponent other) {
     if (own == legHitbox) {
       if (other is ProtoWeapon ||
-          other is ProtoMagic ||
+          other is ArrowMagic ||
           other is CharacterHitbox ||
           other is ProtoGem ||
-          other is ProtoMonster ||
-          other is FireMagic) return;
+          other is Enemy ||
+          other is FireMagic ||
+          other is ThunderMagic) return;
 
       Vector2 pos = Vector2.copy(position);
       pos.add(legHitbox.position);
@@ -150,10 +184,10 @@ class MainPlayer extends Character
     }
     if (own == bodyHitboxy) {
       if (other is ProtoGem) {
+        gameInfo.playerInfo.point += other.exp;
         other.removeFromParent();
-        gameInfo.playerInfo.point++;
-      } else if (other is ProtoMonster && !hasDamage) {
-        gameInfo.playerInfo.hp--;
+      } else if (other is Enemy && !hasDamage) {
+        gameInfo.playerInfo.hp -= other.attack;
         effectDamage(repeatCount: 10);
         if (gameInfo.playerInfo.hp <= 0) {
           gameStatus.mode = GameMode.gameOver;

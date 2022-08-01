@@ -8,6 +8,10 @@ import 'package:practice_flame/proto/hitbox.dart';
 
 class ProtoGem extends SpriteAnimationComponent
     with HasGameRef, CollisionCallbacks {
+  ProtoGem(this.exp);
+
+  final int exp;
+
   @override
   Future<void> onLoad() async {
     final image = await gameRef.images.load('gem.png');
