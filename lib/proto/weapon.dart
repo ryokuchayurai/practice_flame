@@ -18,7 +18,7 @@ class ProtoWeapon extends SpriteComponent with HasGameRef, AttackDamage {
 
   @override
   Future<void> onLoad() async {
-    final image = await gameRef.images.load('bat.png');
+    final image = await gameRef.images.load('bat2.png');
     sprite = Sprite(image);
     size = Vector2(image.width.toDouble(), image.height.toDouble());
     size = Vector2.all(gameInfo.playerInfo.attackRange)..multiply(size);
@@ -33,7 +33,8 @@ class ProtoWeapon extends SpriteComponent with HasGameRef, AttackDamage {
         fromDeg = 0;
         toDeg = 180;
         force = Vector2(0, gameInfo.playerInfo.knockBack * -1);
-        position = Vector2(3, 13);
+        position = Vector2(8, 10);
+        priority = -1;
         break;
       case EightDirection.left:
         fromDeg = 90;
@@ -75,7 +76,7 @@ class ProtoWeapon extends SpriteComponent with HasGameRef, AttackDamage {
           onComplete?.call();
         },
         EffectController(
-          duration: 0.2,
+          duration: 0.35,
           infinite: false,
         ),
       ),

@@ -67,10 +67,24 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
   void update(double dt) {
     super.update(dt);
 
-    final enemy =
-        getRef<MainLayerComponent>().getNearEnemy(position, range: 300);
-    if (enemy != null && _castTimer == null && !_follow) {
-      startCast(enemy);
+    if (!_follow) {
+      try {
+        final enemy =
+            getRef<MainLayerComponent>().getNearEnemy(position, range: 300);
+        if (enemy != null) {
+          if (_castTimer == null) {
+            startCast();
+          }
+          if (readyMagic) {
+            castArrow(enemy);
+            castIce();
+            castFire();
+            castThunder();
+          }
+        }
+      } catch (e) {
+        // FIXME
+      }
     }
 
     final mp = parent?.children.firstWhere((value) => value is MainPlayer)
@@ -93,7 +107,7 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
     }
   }
 
-  void startCast(Enemy enemy) {
+  void startCast() {
     animation = cast[0];
 
     final random = Random();
@@ -119,22 +133,24 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
       _castTimer?.cancel();
       animation = cast[1];
 
-      final from = position.clone()..add(Vector2(size.x / 2, -5));
-
-      getRef<MainLayerComponent>()
-          .add(ArrowMagic(position: from, target: enemy.position));
-
-      if (_fires.length < 3) {
-        _fires.add(FireMagic(onComplete: (fire) => _fires.remove(fire))
-          ..position = position);
-        getRef<MainLayerComponent>().add(_fires.last);
-      }
-
-      getRef<MainLayerComponent>().add(IceMagic(enemy));
-
-      for (var i = 0; i < 5; i++) {
-        getRef<MainLayerComponent>().add(ThunderMagic(from));
-      }
+      readyMagic = true;
+      //
+      // final from = position.clone()..add(Vector2(size.x / 2, -5));
+      //
+      // getRef<MainLayerComponent>()
+      //     .add(ArrowMagic(position: from, target: enemy.position));
+      //
+      // if (_fires.length < 3) {
+      //   _fires.add(FireMagic(onComplete: (fire) => _fires.remove(fire))
+      //     ..position = position);
+      //   getRef<MainLayerComponent>().add(_fires.last);
+      // }
+      //
+      // getRef<MainLayerComponent>().add(IceMagic(enemy));
+      //
+      // for (var i = 0; i < 5; i++) {
+      //   getRef<MainLayerComponent>().add(ThunderMagic(from));
+      // }
 
       Timer(Duration(milliseconds: gameInfo.heroineInfo.castInterval), () {
         animation = idle[EightDirection.down.spriteIndex];
@@ -185,9 +201,45 @@ class Heroine extends Character with ComponentRef, CharacterCollisionCallbacks {
       animation = moveFollow[direction.spriteIndex];
     }
     _follow = true;
+    readyMagic = false;
   }
 
   void unfollow() {
     _follow = false;
+  }
+
+  bool readyMagic = false;
+  bool intervalArrow = false;
+  bool intervalIce = false;
+  bool intervalFire = false;
+  bool intervalThunder = false;
+
+  void castArrow(Enemy enemy) {
+    if (intervalArrow || gameInfo.skillInfo.arrow < 1) return;
+    intervalArrow = true;
+
+    final from = position.clone()..add(Vector2(size.x / 2, -5));
+    getRef<MainLayerComponent>()
+        .add(ArrowMagic(position: from, target: enemy.position));
+
+    Timer(const Duration(milliseconds: 3000), () => intervalArrow = false);
+  }
+
+  void castIce() {
+    if (intervalIce && gameInfo.skillInfo.ice < 1) return;
+    intervalIce = true;
+    Timer(const Duration(milliseconds: 1000), () => intervalIce = false);
+  }
+
+  void castFire() {
+    if (intervalFire && gameInfo.skillInfo.fire < 1) return;
+    intervalFire = true;
+    Timer(const Duration(milliseconds: 1000), () => intervalFire = false);
+  }
+
+  void castThunder() {
+    if (intervalThunder && gameInfo.skillInfo.thunder < 1) return;
+    intervalThunder = true;
+    Timer(const Duration(milliseconds: 1000), () => intervalThunder = false);
   }
 }

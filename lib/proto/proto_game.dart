@@ -15,7 +15,7 @@ import 'package:practice_flame/proto/status.dart';
 
 class ProtoGame extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
-  late MainLayerComponent _mainLayerComponent;
+  MainLayerComponent? _mainLayerComponent;
 
   @override
   Future<void> onLoad() async {
@@ -27,8 +27,10 @@ class ProtoGame extends FlameGame
     _createLayers();
     _addDebugInfo();
 
-    camera.followComponent(_mainLayerComponent.player,
-        worldBounds: const Rect.fromLTRB(0, 0, 16.0 * 50, 16.0 * 50));
+    if (_mainLayerComponent != null) {
+      camera.followComponent(_mainLayerComponent!.player,
+          worldBounds: const Rect.fromLTRB(0, 0, 16.0 * 50, 16.0 * 50));
+    }
   }
 
   void _createLayers() {
@@ -36,19 +38,23 @@ class ProtoGame extends FlameGame
     add(MenuLayerComponent());
     add(HudLayerComponent());
     add(GameOverLayerComponent());
+
+    // add(CutsceneLayerComponent());
   }
 
   void _addDebugInfo() {
     add(FpsTextComponent<TextPaint>(
         textRenderer: TextPaint(style: const TextStyle(fontSize: 8))));
 
-    add(ProtoTextComponent(
-        () => '${_mainLayerComponent.children.length} components',
-        position: Vector2(0, 8),
-        updateInterval: 1.0,
-        textRenderer: TextPaint(style: const TextStyle(fontSize: 8)))
-      ..priority = double.maxFinite.toInt()
-      ..positionType = PositionType.viewport);
+    if (_mainLayerComponent != null) {
+      add(ProtoTextComponent(
+          () => '${_mainLayerComponent?.children.length} components',
+          position: Vector2(0, 8),
+          updateInterval: 1.0,
+          textRenderer: TextPaint(style: const TextStyle(fontSize: 8)))
+        ..priority = double.maxFinite.toInt()
+        ..positionType = PositionType.viewport);
+    }
   }
 
   void reset() {
@@ -59,8 +65,10 @@ class ProtoGame extends FlameGame
 
     gameStatus.mode = GameMode.main;
 
-    camera.followComponent(_mainLayerComponent.player,
-        worldBounds: const Rect.fromLTRB(0, 0, 16.0 * 50, 16.0 * 50));
+    if (_mainLayerComponent != null) {
+      camera.followComponent(_mainLayerComponent!.player,
+          worldBounds: const Rect.fromLTRB(0, 0, 16.0 * 50, 16.0 * 50));
+    }
   }
 
   void showPoint(Vector2 pos, {Color color = Colors.white}) {

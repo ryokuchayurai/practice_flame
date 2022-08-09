@@ -51,7 +51,6 @@ class ArrowMagic extends SpriteAnimationComponent
     force = Vector2(cos(angle) * 70, sin(angle) * 70);
     targetFar = Vector2(cos(angle) * 200, sin(angle) * 200)..add(position);
 
-    debugPrint('magic -> $targetFar');
     (gameRef as ProtoGame).showPoint(targetFar);
 
     final image = await gameRef.images.load('magic-arrow.png');

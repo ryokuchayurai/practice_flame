@@ -6,6 +6,7 @@ import 'package:flame/particles.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:practice_flame/proto/bubble.dart';
 import 'package:practice_flame/proto/character.dart';
 import 'package:practice_flame/proto/direction.dart';
 import 'package:practice_flame/proto/gem.dart';
@@ -109,9 +110,7 @@ class MainPlayer extends Character
     if (_keysPressed?.contains(LogicalKeyboardKey.space) ?? false) {
       if (_weapon == null) {
         _weapon = ProtoWeapon(_direction, onComplete: () {
-          Timer(Duration(milliseconds: gameInfo.playerInfo.attackInterval), () {
-            _weapon = null;
-          });
+          _weapon = null;
         });
         add(_weapon!);
       }
@@ -146,6 +145,13 @@ class MainPlayer extends Character
   @override
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     _keysPressed = keysPressed;
+
+    if (event is RawKeyUpEvent &&
+        event.logicalKey == LogicalKeyboardKey.digit0) {
+      add(Bubble('親譲りの無鉄砲で小供の時から損ばかりしている。小学校に居る時分学校の二階から飛び降りて一週間ほど腰を抜かした事がある。',
+          sound: 'talk_1'));
+    }
+
     return super.onKeyEvent(event, keysPressed);
   }
 

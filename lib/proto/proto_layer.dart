@@ -5,10 +5,12 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart' hide Timer;
 import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
+import 'package:flame/text.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:practice_flame/proto/bubble.dart';
 import 'package:practice_flame/proto/heroine.dart';
 import 'package:practice_flame/proto/info.dart';
 import 'package:practice_flame/proto/main_player.dart';
@@ -43,16 +45,86 @@ mixin ComponentRef on Component {
   }
 }
 
+class Skill {
+  Skill(this.name, this.icon, this.descriptions);
+  String name;
+  String icon;
+  List<String> descriptions;
+
+  late Sprite iconSprite;
+}
+
 class MenuLayerComponent extends ProtoLayerComponent
     with HasGameRef<ProtoGame>, KeyboardHandler {
   @override
   bool get isShow => gameStatus.mode == GameMode.levelUp;
+  // bool get isShow => true;
 
+  late final NineTileBoxComponent _selectedFrame;
   late final NineTileBoxComponent _menuFrame;
   late final RectangleComponent _cursorRect;
 
   int _cursorX = 0;
   int _cursorY = 0;
+
+  final _skills = <Skill>[
+    Skill('走力の魔法', 'skill-icon.png', [
+      '足に加速の魔法をかけて早く走れるようにする。',
+      'もっと早く走れるようにする。',
+      'もっともっと早く走れるようにする。',
+      'もっともっともっと早く走れるようにする。',
+      'もっともっともっともっと早く走れるようにする。',
+    ]),
+    Skill('剛腕の魔法', 'skill-icon.png', [
+      '腕力を強化する魔法をかけてバットで殴った時の威力を上げる。',
+      'もっとバットの威力を上げる。',
+      'もっともっとバットの威力を上げる。',
+      'もっともっともっとバットの威力を上げる。',
+      'もっともっともっともっとバットの威力を上げる。',
+    ]),
+    Skill('拡大の魔法', 'skill-icon.png', [
+      'バットの認識を拡大し遠くまで届くようにする。',
+      'バットをもっと遠くまで届くようにする。',
+      'バットをもっともっと遠くまで届くようにする。',
+      'バットをもっともっともっと遠くまで届くようにする。',
+      'バットをもっともっともっともっと遠くまで届くようにする。',
+    ]),
+    Skill('軽量の魔法', 'skill-icon.png', [
+      'バットを軽くして早く振れるようにする。',
+      'バットをもっと早く振れるようにする。',
+      'バットをもっともっと早く振れるようにする。',
+      'バットをもっともっともっと早く振れるようにする。',
+      'バットをもっともっともっともっと早く振れるようにする。',
+    ]),
+    Skill('矢の魔法', 'skill-icon.png', [
+      '一番近くの敵に魔法の矢を飛ばす。',
+      '矢の魔法をもっと強化する。',
+      '矢の魔法をもっともっと強化する。',
+      '矢の魔法をもっともっともっと強化する。',
+      '矢の魔法をもっともっともっともっと強化する。',
+    ]),
+    Skill('氷の魔法', 'skill-icon.png', [
+      '敵を氷漬けにしてダメージを与え、すこしのあいだ移動速度を遅くする。',
+      '氷の魔法をもっと強化する。',
+      '氷の魔法をもっともっと強化する。',
+      '氷の魔法をもっともっともっと強化する。',
+      '氷の魔法をもっともっともっともっと強化する。',
+    ]),
+    Skill('炎の魔法', 'skill-icon.png', [
+      'まわりを旋回する炎をつくる。',
+      '炎の魔法をもっと強化する。',
+      '炎の魔法をもっともっと強化する。',
+      '炎の魔法をもっともっともっと強化する。',
+      '炎の魔法をもっともっともっともっと強化する。',
+    ]),
+    Skill('雷の魔法', 'skill-icon.png', [
+      '強力な雷を飛ばす。どこに飛ぶかはわからない。',
+      '雷の魔法をもっと強化する。',
+      '雷の魔法をもっともっと強化する。',
+      '雷の魔法をもっともっともっと強化する。',
+      '雷の魔法をもっともっともっともっと強化する。',
+    ]),
+  ];
 
   @override
   Future<void> onLoad() async {
@@ -62,13 +134,17 @@ class MenuLayerComponent extends ProtoLayerComponent
     final sprite = Sprite(await gameRef.images.load('nine-tile.png'));
     final nineTileBox = NineTileBox(sprite);
 
-    add(_menuFrame = NineTileBoxComponent(
+    add(_selectedFrame = NineTileBoxComponent(
       nineTileBox: nineTileBox,
-      position: Vector2(120, 200),
-      size: Vector2(190, 110),
+      position: Vector2(165, 70),
+      size: Vector2(100, 160),
     ));
 
-    _menu();
+    add(_menuFrame = NineTileBoxComponent(
+      nineTileBox: nineTileBox,
+      position: Vector2(120, 210),
+      size: Vector2(190, 80),
+    ));
 
     _menuFrame.add(_cursorRect = RectangleComponent(
         position: Vector2(5, 8),
@@ -77,77 +153,51 @@ class MenuLayerComponent extends ProtoLayerComponent
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
           ..color = Colors.yellow));
+
+    for (final skill in _skills) {
+      skill.iconSprite = Sprite(await gameRef.images.load(skill.icon));
+    }
+
+    _menu();
+    _selected();
   }
 
   void _menu() {
-    _menuFrame.add(ProtoTextComponent(
-        () => '移動速度UP ${gameInfo.playerInfo.speed.toInt()}',
-        position: Vector2(10, 10),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(ProtoTextComponent(
-        () => '攻撃範囲UP ${gameInfo.playerInfo.attackRange.toInt()}',
-        position: Vector2(10, 25),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(ProtoTextComponent(
-        () => '攻撃力UP ${gameInfo.playerInfo.attackPower.toInt()}',
-        position: Vector2(10, 40),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(ProtoTextComponent(
-        () => '攻撃速度UP ${gameInfo.playerInfo.attackInterval}',
-        position: Vector2(10, 55),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
+    final pos = Vector2(10, 10);
+    for (final skill in _skills) {
+      final i = _skills.indexOf(skill);
+      final max = gameInfo.skillInfo.skills[i] >= 4;
 
-    _menuFrame.add(ProtoTextComponent(
-        () => '矢の魔法UP ${gameInfo.heroineInfo.magicArrow}',
-        position: Vector2(100, 10),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(TextComponent(
-        text: '炎の魔法UP ${gameInfo.heroineInfo.magicCircle}',
-        position: Vector2(100, 25),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(TextComponent(
-        text: '氷の魔法UP ${gameInfo.heroineInfo.magicLock}',
-        position: Vector2(100, 40),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(TextComponent(
-        text: '雷の魔法UP ${gameInfo.heroineInfo.magicLaser}',
-        position: Vector2(100, 55),
-        textRenderer: TextPaint(
-            style: TextStyle(
-                fontSize: 10,
-                fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
-                color: Colors.white))));
-    _menuFrame.add(TextComponent(
-        text: '魔法速度UP ${gameInfo.heroineInfo.castTime}',
-        position: Vector2(100, 70),
+      _menuFrame.add(ProtoTextComponent(() => skill.name,
+          position: pos,
+          textRenderer: TextPaint(
+              style: TextStyle(
+                  fontSize: 10,
+                  fontFamily: GoogleFonts.sawarabiMincho().fontFamily,
+                  color: max ? Colors.grey : Colors.white))));
+
+      pos.add(Vector2(0, 15));
+      if (pos.y > 55) {
+        pos.y = 10;
+        pos.x = 100;
+      }
+    }
+  }
+
+  void _selected() {
+    final i = _cursorY + _cursorX * 4;
+    final skill = _skills[i];
+    for (var element in _selectedFrame.children) {
+      element.removeFromParent();
+    }
+
+    _selectedFrame.add(
+        SpriteComponent(sprite: skill.iconSprite, position: Vector2(34, 10)));
+    _selectedFrame.add(ProtoTextBoxComponent(
+        text: skill.descriptions[gameInfo.skillInfo.skills[i]],
+        position: Vector2(0, 44),
+        boxConfig: TextBoxConfig(maxWidth: 100, growingBox: true),
+        lineBreakInWord: true,
         textRenderer: TextPaint(
             style: TextStyle(
                 fontSize: 10,
@@ -161,13 +211,17 @@ class MenuLayerComponent extends ProtoLayerComponent
 
     final isKeyDown = event is RawKeyDownEvent;
     if (isKeyDown) {
-      if (event.logicalKey == LogicalKeyboardKey.keyW) {
+      if (event.logicalKey == LogicalKeyboardKey.keyW ||
+          event.logicalKey == LogicalKeyboardKey.arrowUp) {
         _cursorY--;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
+      } else if (event.logicalKey == LogicalKeyboardKey.keyS ||
+          event.logicalKey == LogicalKeyboardKey.arrowDown) {
         _cursorY++;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyA) {
+      } else if (event.logicalKey == LogicalKeyboardKey.keyA ||
+          event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         _cursorX--;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
+      } else if (event.logicalKey == LogicalKeyboardKey.keyD ||
+          event.logicalKey == LogicalKeyboardKey.arrowRight) {
         _cursorX++;
       }
 
@@ -181,39 +235,22 @@ class MenuLayerComponent extends ProtoLayerComponent
         _cursorY = 0;
       } else if (_cursorX == 0 && _cursorY > 3) {
         _cursorY = 3;
-      } else if (_cursorX == 1 && _cursorY > 4) {
-        _cursorY = 4;
+      } else if (_cursorX == 1 && _cursorY > 3) {
+        _cursorY = 3;
       }
 
       _moveCursor();
-
-      if (event.logicalKey == LogicalKeyboardKey.space) {
-        gameStatus.mode = GameMode.main;
-      }
+      _selected();
     }
 
-    // if (isKeyDown && event.logicalKey == LogicalKeyboardKey.space) {
-    //   switch (_cursor) {
-    //     case 0:
-    //       gameInfo.playerInfo.speed *= 1.1;
-    //       break;
-    //     case 1:
-    //       gameInfo.playerInfo.attackRange *= 1.1;
-    //       break;
-    //     case 2:
-    //       gameInfo.playerInfo.knockBack *= 1.1;
-    //       break;
-    //     case 3:
-    //       gameInfo.heroineInfo.castTime =
-    //           (gameInfo.heroineInfo.castTime * 0.95).toInt();
-    //       gameInfo.heroineInfo.castInterval =
-    //           (gameInfo.heroineInfo.castInterval * 0.95).toInt();
-    //       break;
-    //     default:
-    //       break;
-    //   }
-    //   gameStatus.mode = GameMode.main;
-    // }
+    if (event.logicalKey == LogicalKeyboardKey.space &&
+        event is RawKeyUpEvent) {
+      final i = _cursorY + _cursorX * 4;
+      gameInfo.skillInfo.skills[i] += 1;
+      if (gameInfo.skillInfo.skills[i] > 4) gameInfo.skillInfo.skills[i] = 4;
+      gameStatus.mode = GameMode.main;
+    }
+
     return super.onKeyEvent(event, keysPressed);
   }
 
@@ -272,10 +309,15 @@ class GameOverLayerComponent extends ProtoLayerComponent
     priority = 200001;
     positionType = PositionType.viewport;
 
+    add(CircleComponent(
+        position: Vector2.zero(),
+        radius: 100,
+        paint: Paint()..color = Colors.white.withOpacity(0.8)));
+
     add(RectangleComponent(
         position: Vector2.zero(),
         size: Vector2(400, 320),
-        paint: Paint()..color = Colors.red.withOpacity(0.6)));
+        paint: Paint()..color = Colors.red.withOpacity(0.8)));
 
     add(TextComponent(text: 'GAME OVER', position: Vector2(100, 150)));
   }
@@ -314,12 +356,6 @@ class MainLayerComponent extends ProtoLayerComponent {
 
     add(heroine);
     heroine.position = Vector2(592, 496);
-
-    Timer.periodic(const Duration(seconds: 3), (timer) {
-      for (int i = 0; i < (gameInfo.heroineInfo.level / 3).ceil(); i++) {
-        _addMonster();
-      }
-    });
   }
 
   Future<void> _loadMap() async {
@@ -352,23 +388,79 @@ class MainLayerComponent extends ProtoLayerComponent {
     add(tiledMapPassable);
 
     MapService().initAStar(blockLayer);
+
+    _addSmallMonster();
+    _addBigMonster();
+    _addChargeMonster();
   }
 
-  void _addMonster() {
+  void _addSmallMonster() {
     final rnd = Random();
-    if (rnd.nextBool()) {
-      int x = rnd.nextBool() ? 0 : 49;
-      int y = rnd.nextInt(49);
-      _monsters.add(
-          BigMonster(target: heroine, position: Vector2(x * 16.0, y * 16.0)));
-      add(_monsters.last);
-    } else {
-      int x = rnd.nextInt(49);
-      int y = rnd.nextBool() ? 0 : 49;
-      _monsters.add(
-          SmallMonster(target: heroine, position: Vector2(x * 16.0, y * 16.0)));
-      add(_monsters.last);
-    }
+    Timer.periodic(Duration(seconds: 5), (timer) {
+      int s = _elapsed ~/ 60 + 1;
+
+      for (int i = 0; i < s; i++) {
+        if (rnd.nextBool()) {
+          int x = rnd.nextBool() ? 0 : 49;
+          int y = rnd.nextInt(49);
+          _monsters.add(SmallMonster(
+              target: heroine, position: Vector2(x * 16.0, y * 16.0)));
+          add(_monsters.last);
+        } else {
+          int x = rnd.nextInt(49);
+          int y = rnd.nextBool() ? 0 : 49;
+          _monsters.add(SmallMonster(
+              target: heroine, position: Vector2(x * 16.0, y * 16.0)));
+          add(_monsters.last);
+        }
+      }
+    });
+  }
+
+  void _addBigMonster() {
+    final rnd = Random();
+    Timer.periodic(Duration(seconds: 20), (timer) {
+      int m = _elapsed ~/ 60;
+
+      for (int i = 0; i < m; i++) {
+        if (rnd.nextBool()) {
+          int x = rnd.nextBool() ? 0 : 49;
+          int y = rnd.nextInt(49);
+          _monsters.add(BigMonster(
+              target: heroine, position: Vector2(x * 16.0, y * 16.0)));
+          add(_monsters.last);
+        } else {
+          int x = rnd.nextInt(49);
+          int y = rnd.nextBool() ? 0 : 49;
+          _monsters.add(BigMonster(
+              target: heroine, position: Vector2(x * 16.0, y * 16.0)));
+          add(_monsters.last);
+        }
+      }
+    });
+  }
+
+  void _addChargeMonster() {
+    final rnd = Random();
+    Timer.periodic(Duration(seconds: 60), (timer) {
+      int l = _elapsed ~/ 60;
+
+      for (int i = 0; i < l; i++) {
+        if (rnd.nextBool()) {
+          int x = rnd.nextBool() ? 0 : 49;
+          int y = rnd.nextInt(49);
+          _monsters.add(ChargeMonster(
+              target: heroine, position: Vector2(x * 16.0, y * 16.0)));
+          add(_monsters.last);
+        } else {
+          int x = rnd.nextInt(49);
+          int y = rnd.nextBool() ? 0 : 49;
+          _monsters.add(ChargeMonster(
+              target: heroine, position: Vector2(x * 16.0, y * 16.0)));
+          add(_monsters.last);
+        }
+      }
+    });
   }
 
   Enemy? getNearEnemy(Vector2 pos, {double? range}) {
@@ -386,4 +478,32 @@ class MainLayerComponent extends ProtoLayerComponent {
   void removeMonster(Enemy enemy) {
     _monsters.remove(enemy);
   }
+
+  double _elapsed = 0;
+  @override
+  void update(double dt) {
+    _elapsed += dt;
+  }
+}
+
+class CutsceneLayerComponent extends ProtoLayerComponent
+    with HasGameRef<ProtoGame>, KeyboardHandler {
+  @override
+  bool get isShow => true;
+
+  final MainPlayer player = MainPlayer();
+  final Heroine heroine = Heroine();
+
+  @override
+  Future<void> onLoad() async {
+    _loadScene();
+
+    add(player);
+    player.scale = Vector2.all(2);
+    add(heroine);
+  }
+
+  void _loadScene() {}
+
+  void _play() {}
 }

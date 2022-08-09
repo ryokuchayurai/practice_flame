@@ -1,11 +1,27 @@
 class GameInfo {
   PlayerInfo playerInfo = PlayerInfo();
   HeroineInfo heroineInfo = HeroineInfo();
+  SkillInfo skillInfo = SkillInfo();
 
   reset() {
     playerInfo = PlayerInfo();
     heroineInfo = HeroineInfo();
+    skillInfo = SkillInfo();
   }
+}
+
+class SkillInfo {
+  int get run => skills[0];
+  int get arm => skills[1];
+  int get range => skills[2];
+  int get interval => skills[3];
+
+  int get arrow => skills[4];
+  int get ice => skills[5];
+  int get fire => skills[6];
+  int get thunder => skills[7];
+
+  List<int> skills = [0, 0, 0, 0, 1, 0, 0, 0];
 }
 
 class PlayerInfo {
@@ -15,7 +31,7 @@ class PlayerInfo {
   double speed = 60;
 
   double attackPower = 10;
-  double knockBack = 20;
+  double knockBack = 30;
 
   int attackInterval = 500;
 

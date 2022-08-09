@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math' hide exp;
 import 'dart:ui';
 
 import 'package:flame/collisions.dart';
@@ -153,7 +154,7 @@ class SmallMonster extends SpriteAnimationComponent
     MapService().getPath(position, target.position).then((value) {
       if (value != null) {
         value.removeFirst();
-        value.add(MapNode(target.position));
+        value.add(MapNode(target.center));
         _path = value;
       }
     });
@@ -276,6 +277,104 @@ class BigMonster extends SpriteAnimationComponent
 
   @override
   void slowDown(double factor, {Duration? duration}) {}
+}
+
+class ChargeMonster extends SpriteAnimationComponent
+    with HasGameRef<ProtoGame>, CollisionCallbacks, ComponentRef, Enemy {
+  ChargeMonster({super.position, required this.target}) {
+    hp = 300;
+    maxHp = 30;
+    exp = 100;
+    speed = 300;
+    attack = 3;
+    knockBackFactor = 0.01;
+  }
+
+  final Character target;
+
+  late final Vector2 targetPoint;
+  late final Component dangerZone;
+
+  bool _start = false;
+
+  @override
+  Future<void> onLoad() async {
+    size = Vector2(32, 32);
+    anchor = Anchor.center;
+
+    final shadow = await gameRef.images.load('shadow.png');
+    add(SpriteComponent.fromImage(shadow,
+        paint: Paint()..color = Colors.black.withOpacity(0.2),
+        position: Vector2(4, 28),
+        size: Vector2(28, 10),
+        priority: -1));
+
+    final image = await gameRef.images.load('monster1.png');
+    final spriteSheet = SpriteSheet(image: image, srcSize: Vector2(32, 32));
+
+    animation = spriteSheet.createAnimation(
+        row: 0, stepTime: 0.2, loop: true, from: 0, to: 5);
+
+    final hitboxPaint = BasicPalette.white.paint()
+      ..style = PaintingStyle.stroke;
+    add(
+      ProtoHitbox(
+        'monster',
+        position: Vector2(0, 0),
+        size: size,
+        ignore: ['gem'],
+      )
+        ..paint = hitboxPaint
+        ..renderShape = false,
+    );
+
+    final a = atan2(target.center.y - position.y, target.center.x - position.x);
+    targetPoint = Vector2(cos(a) * 2000, sin(a) * 2000)..add(position);
+
+    dangerZone = RectangleComponent(
+        position: Vector2(0, 16),
+        size: Vector2(3000, 32),
+        paint: Paint()..color = Colors.red.withOpacity(0.2),
+        angle: a,
+        anchor: Anchor.center);
+    dangerZone.add(OpacityEffect.fadeOut(
+      EffectController(
+        duration: 0.5,
+        reverseDuration: 0.5,
+        infinite: true,
+      ),
+    ));
+    add(dangerZone);
+
+    Timer(Duration(seconds: 5), () {
+      _start = true;
+      remove(dangerZone);
+    });
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (_start) {
+      position.moveToTarget(targetPoint, speed * dt);
+      if (position.distanceTo(targetPoint) < 1) {
+        removeFromParent();
+      }
+    }
+  }
+
+  @override
+  void slowDown(double factor, {Duration? duration}) {}
+
+  @override
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    if (other is AttackDamage) {
+      damage(other as AttackDamage);
+    }
+  }
 }
 
 // class ProtoMonsterHitbox extends RectangleHitbox {
