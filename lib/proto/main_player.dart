@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flame/components.dart' hide Timer;
@@ -67,7 +68,7 @@ class MainPlayer extends Character
 
     add(legHitbox = CharacterHitbox(
       'leg',
-      position: Vector2(0, 24),
+      position: Vector2(0, 28),
       size: Vector2(16, 8),
     ));
   }
@@ -75,6 +76,21 @@ class MainPlayer extends Character
   @override
   void update(double dt) {
     super.update(dt);
+
+    if (_path.isNotEmpty) {
+      final r = atan2(_path.first.y - position.y, _path.first.x - position.x);
+      final direction = EightDirectionExtension.fromRadians(r);
+      animation = move[direction.spriteIndex];
+
+      position.moveToTarget(_path.first, gameInfo.playerInfo.speed * dt);
+      if (position.distanceTo(_path.first) < 1) {
+        _path.removeFirst();
+        if (_path.isEmpty) {
+          // TODO callback of movePath
+        }
+      }
+      return;
+    }
 
     if (gameStatus.mode != GameMode.main) return;
 
@@ -148,8 +164,15 @@ class MainPlayer extends Character
 
     if (event is RawKeyUpEvent &&
         event.logicalKey == LogicalKeyboardKey.digit0) {
-      add(Bubble('親譲りの無鉄砲で小供の時から損ばかりしている。小学校に居る時分学校の二階から飛び降りて一週間ほど腰を抜かした事がある。',
-          sound: 'talk_1'));
+      // add(Bubble('親譲りの無鉄砲で小供の時から損ばかりしている。小学校に居る時分学校の二階から飛び降りて一週間ほど腰を抜かした事がある。',
+      //     sound: 'talk_1'));
+      speak('親譲りの無鉄砲で小供の時から損ばかりしている。小学校に居る時分学校の二階から飛び降りて一週間ほど腰を抜かした事がある。');
+    } else if (event is RawKeyUpEvent &&
+        event.logicalKey == LogicalKeyboardKey.digit9) {
+      final path = Queue<Vector2>();
+      path.add(Vector2(100, 100));
+      path.add(Vector2(200, 300));
+      movePath(path);
     }
 
     return super.onKeyEvent(event, keysPressed);
@@ -180,6 +203,10 @@ class MainPlayer extends Character
       (gameRef as ProtoGame).showPoint(pos);
       (gameRef as ProtoGame).showPoint(pointsSum);
 
+      pointsSum.sub(pos);
+      pointsSum.divide(Vector2(8, 8));
+      position.sub(pointsSum);
+
       _collisionMap2[other.hashCode] = CollisionInfo.fromEightDirection(
           EightDirectionExtension.fromRadians(a));
 
@@ -209,6 +236,16 @@ class MainPlayer extends Character
       _collisionMap.remove(other.hashCode);
       _collisionMap2.remove(other.hashCode);
     }
+  }
+
+  Queue<Vector2> _path = Queue();
+
+  void movePath(Queue<Vector2> path) {
+    _path.addAll(path);
+  }
+
+  void speak(String text) {
+    add(Bubble(text, sound: 'talk_1', closeDuration: Duration(seconds: 2)));
   }
 }
 
